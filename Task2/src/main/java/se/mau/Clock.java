@@ -9,7 +9,7 @@ public class Clock
     private Time time = new Time();
     private Date date = new Date();
 
-    private enum State{
+    private enum State {
         S1,
         S2,
         S3,
@@ -29,8 +29,9 @@ public class Clock
                 return "Er.3";
             case S4:
                 return "Er.4";
+            default:
+                return "Invalid enum";
         }
-        return "HOW?";
     }
 
     public String ready() {
@@ -45,8 +46,9 @@ public class Clock
                 return "Er.1";
             case S4:
                 return "Er.2";
+            default:
+                return "Invalid enum";
         }
-        return "What?";
     }
 
     public String set(int a, int b, int c) {
@@ -61,7 +63,8 @@ public class Clock
                 return "Er.5";
             case S2:
                 return "Er.6";
+            default:
+                return "Invalid enum";
         }
-        return null;
     }
 }
