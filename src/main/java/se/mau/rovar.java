@@ -4,8 +4,8 @@ package se.mau;
 public final class rovar
 {
 
-    private static String lower_consonants = "bcdfhjklmnpqrstvwxz";
-    private static String upper_consonants = "BCFGHJKLMNPQRSTVWXZ";
+    private static String lower_consonants = "bcdfghjklmnpqrstvwxz";
+    private static String upper_consonants = "BDCFGHJKLMNPQRSTVWXZ";
 
     /// <summary>
     /// Encode the string in rovarspraket.

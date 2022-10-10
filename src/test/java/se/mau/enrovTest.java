@@ -13,13 +13,13 @@ public class enrovTest
     @Test
     public void nonEmptyStringAllAlphaChars()
     {
-        assertEquals("abobcocdodefofgoghohijkoklolmomnonopopqogrorsostotyvovwowxoxyzozåäö", rovar.enrov("abcdefghijklmnopqrstyvwxyzåäö"));
+        assertEquals("abobcocdodefofgoghohijojkoklolmomnonopopqoqrorsostotyvovwowxoxyzozåäö", rovar.enrov("abcdefghijklmnopqrstyvwxyzåäö"));
     }
 
     @Test
     public void nonEmptyStringAllAlphaCharsCapital()
     {
-        assertEquals("ABOBCOCDODEFOFGOGHOHIJKOKLOLMOMNONOPOPQOGRORSOSTOTYVOVWOWXOXYZOZÅÄÖ", rovar.enrov("ABCDEFGHIJKLMNOPQRSTYVWXYZÅÄÖ"));
+        assertEquals("ABOBCOCDODEFOFGOGHOHIJOJKOKLOLMOMNONOPOPQOQRORSOSTOTYVOVWOWXOXYZOZÅÄÖ", rovar.enrov("ABCDEFGHIJKLMNOPQRSTYVWXYZÅÄÖ"));
     }
 
     @Test

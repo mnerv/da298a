@@ -13,13 +13,13 @@ public class derovTest
     @Test
     public void nonEmptyStringAllAlphaChars()
     {
-        assertEquals("abcdefghijklmnopqrstyvwxyzåäö", rovar.derov("abobcocdodefofgoghohijkoklolmomnonopopqogrorsostotyvovwowxoxyzozåäö"));
+        assertEquals("abcdefghijklmnopqrstyvwxyzåäö", rovar.derov("abobcocdodefofgoghohijkoklolmomnonopopqoqrorsostotyvovwowxoxyzozåäö"));
     }
 
     @Test
     public void nonEmptyStringAllAlphaCharsCapital()
     {
-        assertEquals("ABCDEFGHIJKLMNOPQRSTYVWXYZÅÄÖ", rovar.derov("ABOBCOCDODEFOFGOGHOHIJKOKLOLMOMNONOPOPQOGRORSOSTOTYVOVWOWXOXYZOZÅÄÖ"));
+        assertEquals("ABCDEFGHIJKLMNOPQRSTYVWXYZÅÄÖ", rovar.derov("ABOBCOCDODEFOFGOGHOHIJKOKLOLMOMNONOPOPQOQRORSOSTOTYVOVWOWXOXYZOZÅÄÖ"));
     }
 
     @Test
