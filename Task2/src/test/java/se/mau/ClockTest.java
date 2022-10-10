@@ -79,4 +79,15 @@ public class ClockTest
         clock.ready();
         assertEquals("Er.4", clock.changeMode());
     }
+
+    @Test
+    public void invalidSetTime() {
+        assertEquals("Er.5", clock.set(1,1,1));
+    }
+
+    @Test
+    public void invalidSetDate() {
+        clock.changeMode();
+        assertEquals("Er.6", clock.set(1,1,1));
+    }
 }
