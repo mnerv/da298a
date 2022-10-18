@@ -1,0 +1,9 @@
+{
+  "name": "nurture",
+  "dependencies": [
+    "asio",
+    "gtest",
+    "fmt"
+  ]
+}
+

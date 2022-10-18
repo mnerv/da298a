@@ -1,0 +1,6 @@
+{
+  "name": "sky",
+  "dependencies": [
+    "gtest"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "sky",
+  "build": {
+    "flags": [
+        "-Wall",
+        "-Wextra",
+        "-Wconversion",
+        "-Wpedantic",
+        "-Wshadow",
+        "-Werror"
+    ]
+  }
+}

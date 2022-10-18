@@ -1,0 +1,8 @@
+{
+  "name": "light",
+  "dependencies": [
+    "asio",
+    "gtest",
+    "fmt"
+  ]
+}
