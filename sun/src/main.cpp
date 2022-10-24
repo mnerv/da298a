@@ -1,6 +1,7 @@
 /**
  * @file   main.hpp
  * @author Pratchaya Khansomboon (me@mononerv.dev)
+ * @author Linnéa Mörk
  * @brief  sun embedded program
  * @date   2022-10-23
  *
