@@ -1,12 +1,15 @@
-public class Router {
+//Petter Rignell - LinkSimulering
+//2022-10-25
+
+public class Router{
 
     private String id;
-    private Integer[] costsOfSending;
+    private int[] costsOfSending;
     private Boolean isFire;
 
     public Router(){ }
 
-    public Router(String id, Integer[] costsOfSending, Boolean isFire){
+    public Router(String id, int[] costsOfSending, Boolean isFire){
         this.id = id;
         this.costsOfSending = costsOfSending;
         this.isFire = isFire;
@@ -20,7 +23,7 @@ public class Router {
         this.id = routerID;
     }
 
-    public Integer[] getCostsOfSending(){
+    public int[] getCostsOfSending(){
         return costsOfSending;
     }
 
@@ -32,7 +35,7 @@ public class Router {
         return isFire;
     }
 
-    public void setIsFire(){
+    public void setIsFire(Boolean isFire){
         this.isFire = isFire;
     }
 }
