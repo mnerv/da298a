@@ -39,7 +39,7 @@ auto client_test() -> void {
         else if (err)
             throw asio::system_error(err);
 
-        std::cout.write(buf.data(), len);
+        std::cout.write(buf.data(), std::int64_t(len));
     }
 
     fmt::print("Goodbye world...\n");
@@ -62,7 +62,7 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
         }
     });
 
-    std::thread clients([]{
+    std::thread client_tests([]{
         std::vector<std::shared_ptr<std::thread>> threads;
         for (auto i = 0; i < 0x10; i++)
             threads.emplace_back(std::make_shared<std::thread>(client_test));
@@ -75,14 +75,14 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
     std::thread broadcast_thread([&]{
         fmt::print("Starting broadcasting to all the nodes!\n");
         auto i = 0;
-        for (auto socket : sockets) {
+        for (auto const& socket : sockets) {
             auto msg = fmt::format("This is a message for you all: {}\n", i++);
             asio::error_code ignore_err;
             asio::write(*socket, asio::buffer(msg), ignore_err);
         }
     });
 
-    clients.join();
+    client_tests.join();
     broadcast_thread.join();
     listen_thread.join();
     io_context.stop();

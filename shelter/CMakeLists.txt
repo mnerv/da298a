@@ -23,7 +23,7 @@ target_link_libraries(${TARGET_NAME}
     sky
 )
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
-if (NOT MSVC AND NOT WIN32)
+if (NOT MSVC)
     target_compile_options(${TARGET_NAME} PRIVATE
         "-Wall"
         "-Wextra"
