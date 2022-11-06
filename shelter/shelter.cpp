@@ -1,7 +1,7 @@
 /**
- * @file   helloworld.cpp
+ * @file   shelter.cpp
  * @author Pratchaya Khansomboon (me@mononerv.dev)
- * @brief  light program is simulation for sky framework.
+ * @brief  Shelter program
  * @date   2022-10-18
  *
  * @copyright Copyright (c) 2022

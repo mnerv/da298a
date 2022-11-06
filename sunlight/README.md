@@ -1,4 +1,4 @@
-# sun
+# sunlight
 
 Hardware control and driver to interface with the embedded system.
 

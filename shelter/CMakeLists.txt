@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(light VERSION 0.0.0)
+project(shelter VERSION 0.0.0)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)  # Group CMake targets inside a folder
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)         # Generate compile_commands.json for language servers
 
@@ -9,7 +9,7 @@ find_package(GTest CONFIG REQUIRED)
 
 set(TARGET_NAME ${PROJECT_NAME})
 set(TARGET_SOURCE_FILES
-    "helloworld.cpp"
+    "shelter.cpp"
     "vcpkg.json"
 )
 add_executable(${TARGET_NAME} ${TARGET_SOURCE_FILES})
@@ -38,5 +38,3 @@ else()
     )
 endif()
 source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})
-
-add_subdirectory(tests)
