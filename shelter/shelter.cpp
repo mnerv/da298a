@@ -23,7 +23,7 @@
 auto client_test() -> void {
     asio::io_context io;
     asio::ip::tcp::resolver resolver(io);
-    auto endpoints = resolver.resolve("localhost", "daytime");
+    auto endpoints = resolver.resolve("localhost", "https");
     asio::ip::tcp::socket socket(io);
     asio::connect(socket, endpoints);
 
@@ -45,17 +45,30 @@ auto client_test() -> void {
     fmt::print("Goodbye world...\n");
 }
 
+// Adjacency list
+template <std::size_t SIZE>
+struct node {
+    std::uint16_t address;
+    node*         edges[SIZE]{nullptr};
+};
+
+// auto node_client() -> void {
+//     asio::io_context io;
+//     asio::ip::tcp::resolver resolver(io);
+//     auto endpoints = resolver.resolve("localhost", "13");
+// }
+
 auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
     using asio::ip::tcp;
 
     asio::io_context io_context;
     asio::io_context::work idle_work{io_context};
-    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 13));
+    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 443));
     std::thread thread_context([&]{ io_context.run(); });
     std::vector<std::shared_ptr<tcp::socket>> sockets;
 
     std::thread listen_thread([&]{
-        for (;;) {
+        while(true) {
             auto socket = std::make_shared<tcp::socket>(io_context);
             acceptor.accept(*socket);
             sockets.push_back(socket);
@@ -80,6 +93,8 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
             asio::error_code ignore_err;
             asio::write(*socket, asio::buffer(msg), ignore_err);
         }
+        for (auto const& socket : sockets)
+            socket->close();
     });
 
     client_tests.join();
