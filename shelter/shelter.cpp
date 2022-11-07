@@ -13,91 +13,78 @@
 #include <array>
 #include <vector>
 #include <memory>
+#include <atomic>
 
 #include "fmt/format.h"
 #include "sky.hpp"
 
-#define ASIO_STANDALONE
 #include "asio.hpp"
 
-auto client_test() -> void {
-    asio::io_context io;
-    asio::ip::tcp::resolver resolver(io);
-    auto endpoints = resolver.resolve("localhost", "https");
-    asio::ip::tcp::socket socket(io);
-    asio::connect(socket, endpoints);
+namespace shelter {
+using sockets_t = std::vector<std::shared_ptr<asio::ip::tcp::socket>>;
 
-    fmt::print("connected to {}\n", socket.remote_endpoint().address().to_string());
+using mac_address_t = uint8_t[6];
 
-    for (;;) {
-        std::array<char, 128> buf;
-        asio::error_code err;
-        std::size_t len = socket.read_some(asio::buffer(buf), err);
-
-        if (err == asio::error::eof)
-            break;
-        else if (err)
-            throw asio::system_error(err);
-
-        std::cout.write(buf.data(), std::int64_t(len));
-    }
-
-    fmt::print("Goodbye world...\n");
-}
-
-// Adjacency list
-template <std::size_t SIZE>
 struct node {
-    std::uint16_t address;
-    node*         edges[SIZE]{nullptr};
+    mac_address_t id;
+    mac_address_t edges[4];
 };
 
-// auto node_client() -> void {
-//     asio::io_context io;
-//     asio::ip::tcp::resolver resolver(io);
-//     auto endpoints = resolver.resolve("localhost", "13");
-// }
+struct link_layer {
+    std::uint8_t  preamble;
+    mac_address_t destination;
+    mac_address_t source;
+    std::uint8_t  payload[10];
+    std::uint8_t  crc;
+};
+}
 
 auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
     using asio::ip::tcp;
+    using namespace std::chrono_literals;
 
     asio::io_context io_context;
     asio::io_context::work idle_work{io_context};
     tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 443));
     std::thread thread_context([&]{ io_context.run(); });
-    std::vector<std::shared_ptr<tcp::socket>> sockets;
 
+    std::mutex socket_mutex;
+    shelter::sockets_t sockets;
+
+    std::atomic<bool> listen_running = true;
     std::thread listen_thread([&]{
-        while(true) {
+        fmt::print("shelter@{}:{}\n", acceptor.local_endpoint().address().to_string(), acceptor.local_endpoint().port());
+        while(listen_running) {
             auto socket = std::make_shared<tcp::socket>(io_context);
             acceptor.accept(*socket);
+            std::scoped_lock lock(socket_mutex);
             sockets.push_back(socket);
         }
     });
 
-    std::thread client_tests([]{
-        std::vector<std::shared_ptr<std::thread>> threads;
-        for (auto i = 0; i < 0x10; i++)
-            threads.emplace_back(std::make_shared<std::thread>(client_test));
-        for (auto const& t : threads)
-            t->join();
-    });
-
-    fmt::print("Sleeping for 5s\n");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::atomic<bool> broadcast_running = true;
+    std::atomic<bool> should_broadcast  = false;
     std::thread broadcast_thread([&]{
         fmt::print("Starting broadcasting to all the nodes!\n");
-        auto i = 0;
-        for (auto const& socket : sockets) {
-            auto msg = fmt::format("This is a message for you all: {}\n", i++);
-            asio::error_code ignore_err;
-            asio::write(*socket, asio::buffer(msg), ignore_err);
+        while (broadcast_running) {
+            if (should_broadcast)
+                fmt::print("Broadcasting\n");
+            asio::steady_timer t(io_context, 500ms);
+            t.wait();
         }
-        for (auto const& socket : sockets)
-            socket->close();
     });
 
-    client_tests.join();
+    fmt::print("Starting main simulation...\n");
+    auto is_running = true;
+    while (is_running) {
+        asio::steady_timer t(io_context, 1s);
+        auto now = std::chrono::system_clock::now();
+        auto time = std::chrono::time_point_cast<std::chrono::seconds>(now);
+        fmt::print("Simulation tick: {}\n", time.time_since_epoch().count());
+        should_broadcast = !should_broadcast;
+        t.wait();
+    }
+
     broadcast_thread.join();
     listen_thread.join();
     io_context.stop();

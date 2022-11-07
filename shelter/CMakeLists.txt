@@ -8,6 +8,30 @@ find_package(fmt CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
+set(SHELTER_TARGET_DEFINTIONS "ASIO_STANDALONE")
+if (NOT MSVC)
+    string(JOIN " " SHELTER_TARGET_DEFINTIONS
+        ${SHELTER_TARGET_DEFINTIONS}
+    )
+    set(SHELTER_TARGET_OPTIONS
+        "-Wall"
+        "-Wextra"
+        "-Wconversion"
+        "-Wpedantic"
+        "-Wshadow"
+        "-Werror"
+    )
+else()
+    string(JOIN " " SHELTER_TARGET_DEFINTIONS
+        ${SHELTER_TARGET_DEFINTIONS}
+        "_WIN32_WINNT=0x0A00"
+    )
+    set(SHELTER_TARGET_OPTIONS
+        "/W4"
+        "/WX"
+    )
+endif()
+
 set(TARGET_NAME ${PROJECT_NAME})
 set(TARGET_SOURCE_FILES
     "shelter.cpp"
@@ -22,21 +46,7 @@ target_link_libraries(${TARGET_NAME}
     fmt::fmt
     sky
 )
+target_compile_definitions(${TARGET_NAME} PRIVATE ${SHELTER_TARGET_DEFINTIONS})
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
-if (NOT MSVC)
-    target_compile_options(${TARGET_NAME} PRIVATE
-        "-Wall"
-        "-Wextra"
-        "-Wconversion"
-        "-Wpedantic"
-        "-Wshadow"
-        "-Werror"
-    )
-else()
-    target_compile_definitions(${TARGET_NAME} PRIVATE "_WIN32_WINNT=0x0A00")
-    target_compile_options(${TARGET_NAME} PRIVATE
-        "/W4"
-        "/WX"
-    )
-endif()
+target_compile_options(${TARGET_NAME} PRIVATE ${SHELTER_TARGET_OPTIONS})
 source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})
