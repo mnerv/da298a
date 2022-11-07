@@ -23,7 +23,7 @@
 namespace shelter {
 using sockets_t = std::vector<std::shared_ptr<asio::ip::tcp::socket>>;
 
-using mac_address_t = uint8_t[6];
+using mac_address_t = std::uint8_t[6];
 
 struct node {
     mac_address_t id;
@@ -45,7 +45,8 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
 
     asio::io_context io_context;
     asio::io_context::work idle_work{io_context};
-    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 443));
+    asio::ip::port_type const port = 3000;
+    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
     std::thread thread_context([&]{ io_context.run(); });
 
     std::mutex socket_mutex;
