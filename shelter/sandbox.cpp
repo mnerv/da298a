@@ -18,14 +18,18 @@
 #include "fmt/format.h"
 #include "asio.hpp"
 
-#include "shelter/window.hpp"
+#include "shelter/shelter.hpp"
 #include "sky.hpp"
 
-#include "glad/glad.h"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/vec4.hpp"
 
 auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
-    auto window = shelter::make_window({"Shelter Sandbox"});
+    auto window   = shelter::make_window({"Shelter Sandbox"});
+    auto context  = shelter::make_graphics_context(window);
+    auto renderer = shelter::make_renderer(context);
 
+    glm::vec4 clear_color{0.058f, 0.058f, 0.058f, 1.0f};
     auto is_running = true;
     while (is_running) {
         is_running = !window->shouldclose();
@@ -34,18 +38,17 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
 
         window->begin_imgui();
 
-        ImGui::Begin("Hello, World!");
-        ImGui::Button("much wow");
+        ImGui::Begin("settings");
+        ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
 
         ImGui::Render();
-        glViewport(0, 0, window->width(), window->height());
-        glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        context->set_clear_color(clear_color);
+        context->clear();
 
         window->end_imgui();
         window->poll();
-        window->swap();
+        context->swap();
     }
     return 0;
 }

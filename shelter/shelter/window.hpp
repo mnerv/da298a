@@ -48,7 +48,6 @@ public:
     [[nodiscard]]auto key(std::int32_t const& key) const -> std::int32_t;
     [[nodiscard]]auto mouse_pos() const -> glm::dvec2;
     auto poll() -> void;
-    auto swap() -> void;
 
     auto begin_imgui() -> void;
     auto end_imgui() -> void;

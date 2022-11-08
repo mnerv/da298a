@@ -10,5 +10,7 @@
 #define SHELTER_SHELTER_HPP
 
 #include "window.hpp"
+#include "graphics_context.hpp"
+#include "renderer.hpp"
 
 #endif  // SHELTER_SHELTER_HPP

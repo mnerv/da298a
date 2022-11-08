@@ -61,8 +61,13 @@ endif()
 set(TARGET_NAME shelter)
 set(TARGET_SOURCE_FILES
     "shelter/common.hpp"
+    "shelter/graphics_context.hpp"
     "shelter/shelter.hpp"
+    "shelter/renderer.hpp"
     "shelter/window.hpp"
+
+    "shelter/graphics_context.cpp"
+    "shelter/renderer.cpp"
     "shelter/window.cpp"
 )
 add_library(${TARGET_NAME} OBJECT ${TARGET_SOURCE_FILES})
@@ -83,7 +88,6 @@ target_link_libraries(${TARGET_NAME}
 target_compile_definitions(${TARGET_NAME} PRIVATE ${TARGET_DEFINTIONS})
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
 target_compile_options(${TARGET_NAME} PRIVATE ${TARGET_OPTIONS})
-source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})
 
 set(TARGET_NAME sandbox)
 set(TARGET_SOURCE_FILES

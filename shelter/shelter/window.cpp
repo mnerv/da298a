@@ -90,9 +90,6 @@ auto window::poll() -> void {
     glfwPollEvents();
     glfwGetWindowSize(m_window, &m_data.width, &m_data.height);
 }
-auto window::swap() -> void {
-    glfwSwapBuffers(m_window);
-}
 
 auto window::begin_imgui() -> void {
     ImGui_ImplOpenGL3_NewFrame();
