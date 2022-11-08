@@ -11,6 +11,8 @@
 
 #include "window.hpp"
 #include "graphics_context.hpp"
+#include "buffer.hpp"
+#include "shader.hpp"
 #include "renderer.hpp"
 
 #endif  // SHELTER_SHELTER_HPP

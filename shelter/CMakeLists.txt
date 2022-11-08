@@ -60,14 +60,18 @@ endif()
 
 set(TARGET_NAME shelter)
 set(TARGET_SOURCE_FILES
+    "shelter/buffer.hpp"
     "shelter/common.hpp"
     "shelter/graphics_context.hpp"
     "shelter/shelter.hpp"
     "shelter/renderer.hpp"
+    "shelter/shader.hpp"
     "shelter/window.hpp"
 
+    "shelter/buffer.cpp"
     "shelter/graphics_context.cpp"
     "shelter/renderer.cpp"
+    "shelter/shader.cpp"
     "shelter/window.cpp"
 )
 add_library(${TARGET_NAME} OBJECT ${TARGET_SOURCE_FILES})
