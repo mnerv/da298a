@@ -2,7 +2,7 @@
  * @file   main.hpp
  * @author Pratchaya Khansomboon (me@mononerv.dev)
  * @author Linnéa Mörk
- * @brief  sun embedded program
+ * @brief  sunlight embedded program
  * @date   2022-10-23
  *
  * @copyright Copyright (c) 2022
