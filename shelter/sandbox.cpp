@@ -30,7 +30,7 @@ struct vertex {
     glm::vec2 uv;
 };
 
-auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
+auto entry() -> int {
     auto window   = shelter::make_window({"Shelter Sandbox"});
     auto context  = shelter::make_graphics_context(window);
     auto renderer = shelter::make_renderer(context);
@@ -87,4 +87,13 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
         window->poll();
     }
     return 0;
+}
+
+auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
+    try {
+        return entry();
+    } catch(std::runtime_error const& e) {
+        std::cerr << e.what() << "\n";
+        return 1;
+    }
 }

@@ -27,9 +27,9 @@ layout(location = 2) in vec2 a_uv;
 out vec4 io_color;
 out vec2 io_uv;
 
-// uniform mat4 u_model;
-// uniform mat4 u_view;
-// uniform mat4 u_projection;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
 
 void main() {
     io_color = a_color;
@@ -114,10 +114,9 @@ auto shader::compile(std::uint32_t const& type, char const* source) -> std::uint
     glGetShaderiv(shader, GL_COMPILE_STATUS, &is_success);
     if (!is_success) {
         glGetShaderInfoLog(shader, LOG_SIZE, nullptr, info_log);
-        auto const err = fmt::format("shelter::shader: compile error: {}_SHADER: {}",
-            type == GL_VERTEX_SHADER ? "VERTEX_" : "FRAGMENT_",
+        auto const err = fmt::format("shelter::shader compile error: {}_SHADER: {}",
+            type == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT",
             info_log);
-        fmt::print("{}\n", err);
         throw std::runtime_error(err);
     }
 
@@ -135,8 +134,7 @@ auto shader::link(std::uint32_t const& vertex_shader, std::uint32_t const& fragm
     glGetProgramiv(program, GL_LINK_STATUS, &is_success);
     if (!is_success) {
         glGetProgramInfoLog(program, LOG_SIZE, nullptr, info_log);
-        auto const err = fmt::format("shelter::shader: link error: {:s}", info_log);
-        fmt::print("{}\n", err);
+        auto const err = fmt::format("shelter::shader link error: {:s}", info_log);
         throw std::runtime_error(err);
     }
 
