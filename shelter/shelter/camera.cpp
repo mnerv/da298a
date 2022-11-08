@@ -24,6 +24,12 @@ camera::camera() {
 }
 camera::~camera() = default;
 
+auto camera::set_position(glm::vec2 const& position) -> void {
+    m_position.x = position.x;
+    m_position.y = position.y;
+    m_view = glm::lookAt(m_position, m_position + m_front, m_up);
+}
+
 auto camera::update(window_ref_t const& window) -> void {
     m_size.x = static_cast<float>(window->width());
     m_size.y = static_cast<float>(window->height());

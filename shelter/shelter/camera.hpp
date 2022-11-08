@@ -22,6 +22,9 @@ public:
     camera();
     ~camera();
 
+    auto position() const -> glm::vec3 const& { return m_position; };
+    auto set_position(glm::vec2 const& position) -> void;
+
     auto update(window_ref_t const& window) -> void;
     auto view() const -> glm::mat4 { return m_view; }
     auto projection() const -> glm::mat4;

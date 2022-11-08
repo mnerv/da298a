@@ -42,6 +42,7 @@ public:
     [[nodiscard]]auto native() const -> GLFWwindow* { return m_window; }
     [[nodiscard]]auto context() const -> graphics_context_ref_t const&;
     [[nodiscard]]auto renderer() const -> renderer_ref_t const&;
+    [[nodiscard]]auto time() const -> double;
 
     auto set_title(std::string const& title) -> void;
     auto set_width(std::int32_t const& width) -> void;
@@ -51,6 +52,7 @@ public:
 
     [[nodiscard]]auto shouldclose() const -> bool;
     [[nodiscard]]auto key(std::int32_t const& key) const -> std::int32_t;
+    [[nodiscard]]auto mouse(std::int32_t const& button) const -> std::int32_t;
     [[nodiscard]]auto mouse_pos() const -> glm::dvec2;
     auto poll() -> void;
 

@@ -47,6 +47,10 @@ auto window::context() const -> graphics_context_ref_t const& {
 auto window::renderer() const -> renderer_ref_t const& {
     return m_renderer;
 }
+auto window::time() const -> double {
+    return glfwGetTime();
+}
+
 auto window::set_title(std::string const& title) -> void {
     m_data.title = title;
     glfwSetWindowTitle(m_window, m_data.title.c_str());
@@ -76,6 +80,9 @@ auto window::mouse_pos() const -> glm::dvec2 {
 }
 auto window::key(std::int32_t const& key) const -> std::int32_t {
     return glfwGetKey(m_window, key);
+}
+auto window::mouse(std::int32_t const& button) const -> std::int32_t {
+    return glfwGetMouseButton(m_window, button);
 }
 auto window::poll() -> void {
     glfwPollEvents();
