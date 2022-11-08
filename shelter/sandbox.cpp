@@ -36,8 +36,9 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
 
-        window->begin_imgui();
+        renderer->begin_imgui();
 
+        ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_FirstUseEver);
         ImGui::Begin("settings");
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
@@ -46,7 +47,7 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
         context->set_clear_color(clear_color);
         context->clear();
 
-        window->end_imgui();
+        renderer->end_imgui();
         window->poll();
         context->swap();
     }

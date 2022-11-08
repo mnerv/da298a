@@ -19,7 +19,9 @@ static auto info_opengl() -> void {
 }
 
 auto make_graphics_context(window_ref_t window) -> graphics_context_ref_t {
-    return make_ref<graphics_context>(window);
+    if (window->context() != nullptr) return window->context();
+    window->set_context(make_ref<graphics_context>(window));
+    return window->context();
 }
 
 graphics_context::graphics_context(window_ref_t window) : m_window(std::move(window)) {

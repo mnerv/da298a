@@ -14,7 +14,6 @@
 #include "graphics_context.hpp"
 
 namespace shelter {
-using renderer_ref_t = ref<class renderer>;
 auto make_renderer(graphics_context_ref_t context) -> renderer_ref_t;
 
 class renderer {
@@ -23,6 +22,9 @@ public:
     ~renderer();
 
     auto context() const -> graphics_context_ref_t const& { return m_context; }
+
+    auto begin_imgui() const -> void;
+    auto end_imgui() const -> void;
 
 private:
     graphics_context_ref_t m_context;

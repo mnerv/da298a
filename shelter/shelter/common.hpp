@@ -25,6 +25,11 @@ template <typename T, typename... Args>
 constexpr auto make_local(Args&&... args) -> local<T> {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
+
+// Foward declaration
+using window_ref_t           = ref<class window>;
+using graphics_context_ref_t = ref<class graphics_context>;
+using renderer_ref_t         = ref<class renderer>;
 } // namespace shelter
 
 #endif  // SHELTER_COMMON_HPP

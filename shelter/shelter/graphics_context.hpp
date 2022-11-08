@@ -15,7 +15,6 @@
 #include "glm/vec4.hpp"
 
 namespace shelter {
-using graphics_context_ref_t = ref<class graphics_context>;
 auto make_graphics_context(window_ref_t window) -> graphics_context_ref_t;
 
 class graphics_context {

@@ -10,8 +10,6 @@
 #include "window.hpp"
 
 #include "glad/glad.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 
 namespace shelter {
 static auto setup_opengl() -> void {
@@ -38,30 +36,17 @@ window::window(window_props const& props) {
     glfwMakeContextCurrent(m_window);
     if (!gladLoadGLLoader(GLADloadproc(glfwGetProcAddress)))
         throw std::runtime_error("shelter::window: error: Failed to load glad!");
-
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport / Platform Windows
-
-    ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-    ImGui_ImplOpenGL3_Init("#version 410");
 }
 window::~window() {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
     glfwTerminate();
 }
 
+auto window::context() const -> graphics_context_ref_t const& {
+    return m_context;
+}
+auto window::renderer() const -> renderer_ref_t const& {
+    return m_renderer;
+}
 auto window::set_title(std::string const& title) -> void {
     m_data.title = title;
     glfwSetWindowTitle(m_window, m_data.title.c_str());
@@ -73,6 +58,12 @@ auto window::set_width(std::int32_t const& width) -> void {
 auto window::set_height(std::int32_t const& height) -> void {
     m_data.height = height;
     glfwSetWindowSize(m_window, m_data.width, m_data.height);
+}
+auto window::set_context(graphics_context_ref_t context) -> void {
+    m_context = std::move(context);
+}
+auto window::set_renderer(renderer_ref_t renderer) -> void {
+    m_renderer = std::move(renderer);
 }
 
 auto window::shouldclose() const -> bool {
@@ -89,22 +80,6 @@ auto window::key(std::int32_t const& key) const -> std::int32_t {
 auto window::poll() -> void {
     glfwPollEvents();
     glfwGetWindowSize(m_window, &m_data.width, &m_data.height);
-}
-
-auto window::begin_imgui() -> void {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-auto window::end_imgui() -> void {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        auto backup_current_context = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
-    }
 }
 
 } // namespace shelter
