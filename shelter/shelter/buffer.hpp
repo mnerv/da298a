@@ -147,12 +147,12 @@ public:
     auto bind() const -> void;
     auto unbind() const -> void;
 
-    auto size() const -> std::int32_t { return m_size; }
+    auto size() const -> std::uint32_t { return m_size; }
     auto type() const -> std::uint32_t { return m_type; }
 
 private:
     std::uint32_t m_buffer{};
-    std::int32_t  m_size{};
+    std::uint32_t m_size{};
     std::uint32_t m_type{};
 };
 

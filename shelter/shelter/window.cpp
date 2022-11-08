@@ -80,6 +80,12 @@ auto window::key(std::int32_t const& key) const -> std::int32_t {
 auto window::poll() -> void {
     glfwPollEvents();
     glfwGetWindowSize(m_window, &m_data.width, &m_data.height);
+    std::int32_t buffer_width, buffer_height;
+    glfwGetFramebufferSize(m_window, &buffer_width, &buffer_height);
+    if (buffer_width >= 0 && buffer_height >= 0) {
+        m_data.buffer_width  = static_cast<std::uint32_t>(buffer_width);
+        m_data.buffer_height = static_cast<std::uint32_t>(buffer_height);
+    }
 }
 
 } // namespace shelter

@@ -62,7 +62,7 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char const* argv[]) -> int {
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
 
-        context->viewport(0, 0, window->width(), window->height());
+        context->viewport(0, 0, window->buffer_width(), window->buffer_height());
         context->set_clear_color(clear_color);
         context->clear();
 

@@ -37,6 +37,8 @@ public:
     [[nodiscard]]auto title()  const -> std::string const& { return m_data.title; }
     [[nodiscard]]auto width()  const -> std::int32_t { return m_data.width; }
     [[nodiscard]]auto height() const -> std::int32_t { return m_data.height; }
+    [[nodiscard]]auto buffer_width()  const -> std::uint32_t { return m_data.buffer_width; }
+    [[nodiscard]]auto buffer_height() const -> std::uint32_t { return m_data.buffer_height; }
     [[nodiscard]]auto native() const -> GLFWwindow* { return m_window; }
     [[nodiscard]]auto context() const -> graphics_context_ref_t const&;
     [[nodiscard]]auto renderer() const -> renderer_ref_t const&;
@@ -61,6 +63,9 @@ private:
         std::string  title;
         std::int32_t width;
         std::int32_t height;
+
+        std::uint32_t buffer_width;
+        std::uint32_t buffer_height;
     } m_data;
 };
 } // namespace shelter
