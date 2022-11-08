@@ -8,12 +8,12 @@ find_package(fmt CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
-set(SHELTER_TARGET_DEFINTIONS "ASIO_STANDALONE")
+set(TARGET_DEFINITIONS "ASIO_STANDALONE")
 if (NOT MSVC)
-    string(JOIN " " SHELTER_TARGET_DEFINTIONS
-        ${SHELTER_TARGET_DEFINTIONS}
+    string(JOIN " " TARGET_DEFINTIONS
+        ${TARGET_DEFINTIONS}
     )
-    set(SHELTER_TARGET_OPTIONS
+    set(TARGET_OPTIONS
         "-Wall"
         "-Wextra"
         "-Wconversion"
@@ -22,14 +22,35 @@ if (NOT MSVC)
         "-Werror"
     )
 else()
-    string(JOIN " " SHELTER_TARGET_DEFINTIONS
-        ${SHELTER_TARGET_DEFINTIONS}
+    string(JOIN " " TARGET_DEFINTIONS
+        ${TARGET_DEFINTIONS}
         "_WIN32_WINNT=0x0A00"
     )
-    set(SHELTER_TARGET_OPTIONS
+    set(TARGET_OPTIONS
         "/W4"
         "/WX"
     )
+endif()
+
+if (APPLE)
+    set(TARGET_LIBRARIES
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework OpenGL"
+    )
+elseif (LINUX)
+    set(TARGET_LIBRARIES
+        "-dl"
+        "-m"
+        "-GL"
+        "-X11"
+    )
+elseif (WIN32)
+    set(TARGET_LIBRARIES "OpenGL32.lib")
+endif()
+if (NOT DEFINED TARGET_LIBRARIES)
+    message(FATAL_ERROR "TARGET_LIRBARIES not defined!")
 endif()
 
 set(TARGET_NAME ${PROJECT_NAME})
@@ -45,8 +66,10 @@ target_link_libraries(${TARGET_NAME}
     asio::asio
     fmt::fmt
     sky
+
+    ${TARGET_LIBRARIES}
 )
-target_compile_definitions(${TARGET_NAME} PRIVATE ${SHELTER_TARGET_DEFINTIONS})
+target_compile_definitions(${TARGET_NAME} PRIVATE ${TARGET_DEFINTIONS})
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
-target_compile_options(${TARGET_NAME} PRIVATE ${SHELTER_TARGET_OPTIONS})
+target_compile_options(${TARGET_NAME} PRIVATE ${TARGET_OPTIONS})
 source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})
