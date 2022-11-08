@@ -38,6 +38,7 @@ using shader_ref_t           = ref<class shader>;
 using vertex_buffer_ref_t    = ref<class vertex_buffer>;
 using index_buffer_ref_t     = ref<class index_buffer>;
 using renderer_ref_t         = ref<class renderer>;
+using camera_ref_t           = ref<class camera>;
 
 } // namespace shelter
 

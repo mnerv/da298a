@@ -14,5 +14,6 @@
 #include "buffer.hpp"
 #include "shader.hpp"
 #include "renderer.hpp"
+#include "camera.hpp"
 
 #endif  // SHELTER_SHELTER_HPP

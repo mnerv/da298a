@@ -55,6 +55,9 @@ auto entry() -> int {
         {shelter::data_type::vec2, "a_uv"},
     });
 
+    auto camera = shelter::make_camera();
+    glm::vec4 clear_color{0.058f};
+
     auto is_running = true;
     while (is_running) {
         is_running = !window->shouldclose();
@@ -62,14 +65,20 @@ auto entry() -> int {
             is_running = false;
 
         context->viewport(0, 0, window->buffer_width(), window->buffer_height());
-        context->set_clear_color({1.0f, 0.0f, 1.0f, 1.0f});
+        context->set_clear_color(clear_color);
         context->clear();
 
         // renderer->begin();
         // renderer->submit();
         // renderer->end();
+        glm::mat4 model{1.0f};
+        model = glm::translate(model, {0.0f, 0.0f, 0.0f});
+        model = glm::scale(model, {100.0f, 100.0f, 1.0f});
 
         shader->bind();
+        shader->upload("u_model", model);
+        shader->upload("u_view", camera->view());
+        shader->upload("u_projection", camera->projection(window));
         vb->bind();
         ib->bind();
         glDrawElements(GL_TRIANGLES, ib->size(), ib->type(), nullptr);
@@ -77,6 +86,7 @@ auto entry() -> int {
         renderer->begin_imgui();
         ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_FirstUseEver);
         ImGui::Begin("settings");
+        ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
         ImGui::Render();
         renderer->end_imgui();
