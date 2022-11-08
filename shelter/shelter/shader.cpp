@@ -45,8 +45,10 @@ layout(location = 0) out vec4 color;
 in vec4 io_color;
 in vec2 io_uv;
 
+uniform vec4 u_color;
+
 void main() {
-    color = io_color;
+    color = u_color;
 }
 )";
 

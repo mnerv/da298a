@@ -22,14 +22,17 @@ public:
     camera();
     ~camera();
 
+    auto update(window_ref_t const& window) -> void;
     auto view() const -> glm::mat4 { return m_view; }
-    auto projection(window_ref_t const& window) const -> glm::mat4;
+    auto projection() const -> glm::mat4;
 
 private:
     glm::vec3 m_position;
     glm::vec3 m_front;
     glm::vec3 m_up;
     glm::mat4 m_view;
+
+    glm::vec2 m_size;
 };
 } // namespace shelter
 

@@ -39,6 +39,21 @@ renderer::~renderer() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
+auto renderer::begin(camera_ref_t const& camera) -> void {
+    m_camera = camera;
+}
+auto renderer::submit(shader_ref_t const& shader, vertex_buffer_ref_t const& vb, index_buffer_ref_t const& ib, glm::mat4 const& model) -> void {
+    shader->bind();
+    shader->upload("u_model", model);
+    shader->upload("u_view", m_camera->view());
+    shader->upload("u_projection", m_camera->projection());
+    vb->bind();
+    ib->bind();
+    glDrawElements(GL_TRIANGLES, ib->size(), ib->type(), nullptr);
+}
+auto renderer::end() -> void {
+    // TODO: clean up submit?
+}
 
 auto renderer::begin_imgui() const -> void {
     ImGui_ImplOpenGL3_NewFrame();

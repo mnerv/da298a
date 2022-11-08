@@ -14,6 +14,7 @@
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <cmath>
 
 #include "fmt/format.h"
 #include "asio.hpp"
@@ -30,21 +31,22 @@ struct vertex {
     glm::vec2 uv;
 };
 
+static vertex vertices[] {
+    {{-1.0f,  1.0f,  0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{ 1.0f,  1.0f,  0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{ 1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
+    {{-1.0f, -1.0f,  0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
+};
+
+static std::uint32_t indices[] {
+    0, 1, 2,
+    0, 2, 3
+};
+
 auto entry() -> int {
     auto window   = shelter::make_window({"Shelter Sandbox"});
     auto context  = shelter::make_graphics_context(window);
     auto renderer = shelter::make_renderer(context);
-
-    vertex vertices[] {
-        {{-1.0f,  1.0f,  0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{ 1.0f,  1.0f,  0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{ 1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-        {{-1.0f, -1.0f,  0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    };
-    std::uint32_t indices[] {
-        0, 1, 2,
-        0, 2, 3
-    };
 
     auto shader = shelter::make_shader(context);
     auto ib = shelter::make_index_buffer(context, indices, sizeof(indices),
@@ -64,24 +66,22 @@ auto entry() -> int {
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
 
+        camera->update(window);
         context->viewport(0, 0, window->buffer_width(), window->buffer_height());
         context->set_clear_color(clear_color);
         context->clear();
 
-        // renderer->begin();
-        // renderer->submit();
-        // renderer->end();
-        glm::mat4 model{1.0f};
-        model = glm::translate(model, {0.0f, 0.0f, 0.0f});
-        model = glm::scale(model, {100.0f, 100.0f, 1.0f});
-
-        shader->bind();
-        shader->upload("u_model", model);
-        shader->upload("u_view", camera->view());
-        shader->upload("u_projection", camera->projection(window));
-        vb->bind();
-        ib->bind();
-        glDrawElements(GL_TRIANGLES, ib->size(), ib->type(), nullptr);
+        renderer->begin(camera);
+        shader->upload("u_color", glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+        for (float i = 0.0f; i < 10.0f; ++i) {
+            for (float j = 0.0f; j < 10.0f; ++j) {
+                float const offset  = 20.0f;
+                float const padding = 25.0f;
+                glm::vec3 position{(offset + padding) * j, (offset + padding) * i, 1.0f};
+                renderer->submit(shader, vb, ib, glm::scale(glm::translate(glm::mat4{1.0f}, position), {10.0f, 10.0f, 1.0f}));
+            }
+        }
+        renderer->end();
 
         renderer->begin_imgui();
         ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_FirstUseEver);

@@ -13,6 +13,11 @@
 #include "window.hpp"
 #include "graphics_context.hpp"
 
+#include "shader.hpp"
+#include "buffer.hpp"
+#include "camera.hpp"
+#include "glm/mat4x4.hpp"
+
 namespace shelter {
 auto make_renderer(graphics_context_ref_t context) -> renderer_ref_t;
 
@@ -23,11 +28,16 @@ public:
 
     auto context() const -> graphics_context_ref_t const& { return m_context; }
 
+    auto begin(camera_ref_t const& camera) -> void;
+    auto submit(shader_ref_t const& shader, vertex_buffer_ref_t const& vb, index_buffer_ref_t const& ib, glm::mat4 const& model) -> void;
+    auto end() -> void;
+
     auto begin_imgui() const -> void;
     auto end_imgui() const -> void;
 
 private:
     graphics_context_ref_t m_context;
+    camera_ref_t m_camera;
 };
 } // namespace shelter
 

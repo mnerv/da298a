@@ -20,12 +20,15 @@ camera::camera() {
     m_front    = { 0.0f,  0.0f, -1.0f};
     m_up       = { 0.0f,  1.0f,  0.0f};
     m_view = glm::lookAt(m_position, m_position + m_front, m_up);
+    m_size = {};
 }
 camera::~camera() = default;
 
-auto camera::projection(window_ref_t const& window) const -> glm::mat4 {
-    auto const width  = static_cast<float>(window->width());
-    auto const height = static_cast<float>(window->height());
-    return glm::ortho(-width / 2.0f, width / 2.0f, -height / 2.0f, height / 2.0f);
+auto camera::update(window_ref_t const& window) -> void {
+    m_size.x = static_cast<float>(window->width());
+    m_size.y = static_cast<float>(window->height());
+}
+auto camera::projection() const -> glm::mat4 {
+    return glm::ortho(-m_size.x / 2.0f, m_size.x / 2.0f, -m_size.y / 2.0f, m_size.y / 2.0f);
 }
 } // namespace shelter
