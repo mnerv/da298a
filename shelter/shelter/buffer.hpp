@@ -16,6 +16,9 @@
 #include "graphics_context.hpp"
 
 namespace shelter {
+auto make_vertex_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, class buffer_layout const& layout) -> vertex_buffer_ref_t;
+auto make_index_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, std::uint32_t const& count) -> index_buffer_ref_t;
+
 enum class data_type {
     boolean,
     i8,  u8,
@@ -155,9 +158,6 @@ private:
     std::uint32_t m_size{};
     std::uint32_t m_type{};
 };
-
-auto make_vertex_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, buffer_layout const& layout) -> vertex_buffer_ref_t;
-auto make_index_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, std::uint32_t const& count) -> index_buffer_ref_t;
 } // namespace shelter
 
 #endif  // SHELTER_BUFFER_HPP

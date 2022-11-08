@@ -48,14 +48,13 @@ auto entry() -> int {
 
     auto shader = shelter::make_shader(context);
     auto ib = shelter::make_index_buffer(context, indices, sizeof(indices),
-        static_cast<std::int32_t>(shelter::length_of(indices)));
+        static_cast<std::uint32_t>(shelter::length_of(indices)));
     auto vb = shelter::make_vertex_buffer(context, vertices, sizeof(vertices), {
         {shelter::data_type::vec3, "a_position"},
         {shelter::data_type::vec4, "a_color"},
         {shelter::data_type::vec2, "a_uv"},
     });
 
-    glm::vec4 clear_color{0.058f, 0.058f, 0.058f, 1.0f};
     auto is_running = true;
     while (is_running) {
         is_running = !window->shouldclose();
@@ -63,7 +62,7 @@ auto entry() -> int {
             is_running = false;
 
         context->viewport(0, 0, window->buffer_width(), window->buffer_height());
-        context->set_clear_color(clear_color);
+        context->set_clear_color({1.0f, 0.0f, 1.0f, 1.0f});
         context->clear();
 
         // renderer->begin();
@@ -78,7 +77,6 @@ auto entry() -> int {
         renderer->begin_imgui();
         ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_FirstUseEver);
         ImGui::Begin("settings");
-        ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
         ImGui::Render();
         renderer->end_imgui();
