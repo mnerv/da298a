@@ -3,7 +3,19 @@
   "dependencies": [
     "asio",
     "gtest",
-    "fmt"
+    "fmt",
+    "glfw3",
+    {
+      "name": "glad",
+      "default-features": false,
+      "features": ["gl-api-41"]
+    },
+    "glm",
+    {
+      "name": "imgui",
+      "default-features": false,
+      "features": ["glfw-binding", "opengl3-binding", "docking-experimental"]
+    }
   ]
 }
 
