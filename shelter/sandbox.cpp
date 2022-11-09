@@ -32,10 +32,10 @@ struct vertex {
 };
 
 static vertex vertices[] {
-    {{-1.0f,  1.0f,  0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f,  0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{-1.0f, -1.0f,  0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
+    {{-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{ 0.5f,  0.5f,  0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{ 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
+    {{-0.5f, -0.5f,  0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 };
 
 static std::uint32_t indices[] {
@@ -85,7 +85,7 @@ auto entry() -> int {
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
 
-        mouse_press.update(window->mouse(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS);
+        mouse_press.update(window->mouse(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !ImGui::IsAnyItemActive());
         if (mouse_press.current && mouse_press.is_switched()) {
             mouse_start = window->mouse_pos();
             camera_saved_position = camera->position();
@@ -107,13 +107,14 @@ auto entry() -> int {
                 float const offset  = 20.0f;
                 float const padding = 25.0f;
                 glm::vec3 position{(offset + padding) * j, (offset + padding) * i, 1.0f};
-                renderer->submit(shader, vb, ib, glm::scale(glm::translate(glm::mat4{1.0f}, position), {10.0f, 10.0f, 1.0f}));
+                renderer->submit(shader, vb, ib, glm::scale(glm::translate(glm::mat4{1.0f}, position), glm::vec3{20.0f}));
             }
         }
         renderer->end();
 
         renderer->begin_imgui();
-        ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_Once);
+        ImGui::SetNextWindowPos({float(window->posx()) + 2.0f, float(window->posy()) + 2.0f}, ImGuiCond_Once);
         ImGui::Begin("settings");
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
