@@ -31,7 +31,7 @@ constexpr auto length_of(T (&)[N]) -> std::size_t {
     return N;
 }
 
-// Foward declaration
+// Forward declaration
 using window_ref_t           = ref<class window>;
 using graphics_context_ref_t = ref<class graphics_context>;
 using shader_ref_t           = ref<class shader>;
