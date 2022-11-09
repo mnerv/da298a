@@ -25,24 +25,6 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/vec4.hpp"
 
-struct vertex {
-    glm::vec3 position;
-    glm::vec4 color;
-    glm::vec2 uv;
-};
-
-static vertex vertices[] {
-    {{-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{ 0.5f,  0.5f,  0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{ 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{-0.5f, -0.5f,  0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-};
-
-static std::uint32_t indices[] {
-    0, 1, 2,
-    0, 2, 3
-};
-
 template <typename T>
 struct input_state {
     T current;
@@ -61,15 +43,6 @@ auto entry() -> int {
     auto window   = shelter::make_window({"Shelter Sandbox"});
     auto context  = shelter::make_graphics_context(window);
     auto renderer = shelter::make_renderer(context);
-
-    auto shader = shelter::make_shader(context);
-    auto ib = shelter::make_index_buffer(context, indices, sizeof(indices),
-        static_cast<std::uint32_t>(shelter::length_of(indices)));
-    auto vb = shelter::make_vertex_buffer(context, vertices, sizeof(vertices), {
-        {shelter::data_type::vec3, "a_position"},
-        {shelter::data_type::vec4, "a_color"},
-        {shelter::data_type::vec2, "a_uv"},
-    });
 
     auto camera = shelter::make_camera();
     glm::vec4 clear_color{0.058f};
@@ -100,13 +73,12 @@ auto entry() -> int {
         context->clear();
 
         renderer->begin(camera);
-        shader->upload("u_color", glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
-        for (float i = 0.0f; i < 16.0f; ++i) {
-            for (float j = 0.0f; j < 16.0f; ++j) {
+        for (float i = 0.0f; i < 4.0f; ++i) {
+            for (float j = 0.0f; j < 4.0f; ++j) {
                 float const offset  = 20.0f;
                 float const padding = 25.0f;
-                glm::vec3 position{(offset + padding) * j, (offset + padding) * i, 1.0f};
-                renderer->submit(shader, vb, ib, glm::scale(glm::translate(glm::mat4{1.0f}, position), glm::vec3{20.0f}));
+                glm::vec2 position{(offset + padding) * j, (offset + padding) * i};
+                renderer->quad(position, {20.0f, 20.0f}, glm::vec4{1.0f});
             }
         }
         renderer->end();
