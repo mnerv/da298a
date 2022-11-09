@@ -13,12 +13,43 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 namespace shelter {
-
 auto make_renderer(graphics_context_ref_t context) -> renderer_ref_t {
     if (context->window()->renderer() != nullptr) return context->window()->renderer();
     context->window()->set_renderer(make_ref<renderer>(context));
     return context->window()->renderer();
 }
+
+static constexpr auto DEFAULT_VERTEX_SHADER = R"(#version 410 core
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec4 a_color;
+layout(location = 2) in vec2 a_uv;
+
+out vec4 io_color;
+out vec2 io_uv;
+
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
+
+void main() {
+    io_color = a_color;
+    io_uv    = a_uv;
+
+    gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0f);
+}
+)";
+static constexpr auto DEFAULT_FRAGMENT_SHADER = R"(#version 410 core
+layout(location = 0) out vec4 color;
+
+in vec4 io_color;
+in vec2 io_uv;
+
+uniform vec4 u_color;
+
+void main() {
+    color = u_color;
+}
+)";
 
 renderer::renderer(graphics_context_ref_t context) : m_context(std::move(context)) {
     setup_2d();
@@ -57,8 +88,8 @@ auto renderer::submit(shader_ref_t const& shader, vertex_buffer_ref_t const& vb,
     glDrawElements(GL_TRIANGLES, ib->size(), ib->type(), nullptr);
 }
 auto renderer::quad(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void {
-    m_2d.shader->upload("u_color", color);
-    submit(m_2d.shader, m_2d.vertex_buffer, m_2d.index_buffer,
+    m_quad.shader->upload("u_color", color);
+    submit(m_quad.shader, m_quad.vertex, m_quad.index,
         glm::scale(glm::translate(glm::mat4{1.0f}, glm::vec3{position, 0.0f}), glm::vec3{size, 1.0f}));
 }
 auto renderer::end() -> void {
@@ -99,10 +130,10 @@ auto renderer::setup_2d() -> void {
         0, 2, 3
     };
 
-    m_2d.shader = shelter::make_shader(m_context);
-    m_2d.index_buffer = shelter::make_index_buffer(m_context, indices, sizeof(indices),
+    m_quad.shader = shelter::make_shader(m_context, DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
+    m_quad.index  = shelter::make_index_buffer(m_context, indices, sizeof(indices),
         static_cast<std::uint32_t>(shelter::length_of(indices)));
-    m_2d.vertex_buffer = shelter::make_vertex_buffer(m_context, vertices, sizeof(vertices), {
+    m_quad.vertex = shelter::make_vertex_buffer(m_context, vertices, sizeof(vertices), {
         {shelter::data_type::vec3, "a_position"},
         {shelter::data_type::vec4, "a_color"},
         {shelter::data_type::vec2, "a_uv"},

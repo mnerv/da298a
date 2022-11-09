@@ -40,12 +40,12 @@ private:
     graphics_context_ref_t m_context;
     camera_ref_t           m_camera;
 
-    struct renderer_2d{
+    struct data {
         shader_ref_t        shader{nullptr};
-        index_buffer_ref_t  index_buffer{nullptr};
-        vertex_buffer_ref_t vertex_buffer{nullptr};
+        index_buffer_ref_t  index{nullptr};
+        vertex_buffer_ref_t vertex{nullptr};
     };
-    renderer_2d m_2d;
+    data m_quad;
 
 private:
     auto setup_2d() -> void;

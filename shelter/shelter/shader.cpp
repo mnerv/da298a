@@ -14,47 +14,14 @@
 #include "glm/gtc/type_ptr.hpp"
 
 namespace shelter {
-auto make_shader(graphics_context_ref_t context) -> shader_ref_t {
+auto make_shader(graphics_context_ref_t context, std::string const& vs_source, std::string const& fs_sourc) -> shader_ref_t {
     if (context == nullptr) throw std::runtime_error("shelter::make_shader: context cannot be nullptr!");
-    return make_ref<shader>();
+    return make_ref<shader>(vs_source, fs_sourc);
 }
 
-static auto DEFAULT_VERTEX_SHADER = R"(#version 410 core
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec4 a_color;
-layout(location = 2) in vec2 a_uv;
-
-out vec4 io_color;
-out vec2 io_uv;
-
-uniform mat4 u_model;
-uniform mat4 u_view;
-uniform mat4 u_projection;
-
-void main() {
-    io_color = a_color;
-    io_uv    = a_uv;
-
-    gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0f);
-}
-)";
-
-static auto DEFAULT_FRAGMENT_SHADER = R"(#version 410 core
-layout(location = 0) out vec4 color;
-
-in vec4 io_color;
-in vec2 io_uv;
-
-uniform vec4 u_color;
-
-void main() {
-    color = u_color;
-}
-)";
-
-shader::shader() {
-    auto vs = compile(GL_VERTEX_SHADER, DEFAULT_VERTEX_SHADER);
-    auto fs = compile(GL_FRAGMENT_SHADER, DEFAULT_FRAGMENT_SHADER);
+shader::shader(std::string const& vs_source, std::string const& fs_source) {
+    auto vs = compile(GL_VERTEX_SHADER, vs_source.c_str());
+    auto fs = compile(GL_FRAGMENT_SHADER, fs_source.c_str());
     m_id = link(vs, fs);
 }
 shader::~shader() {

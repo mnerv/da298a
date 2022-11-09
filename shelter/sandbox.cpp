@@ -75,8 +75,8 @@ auto entry() -> int {
             auto const delta = glm::vec3(-(current.x - mouse_start.x), current.y - mouse_start.y, 0.0f);
             camera->set_position(camera_saved_position + delta);
         }
-
         camera->update(window);
+
         context->viewport(0, 0, window->buffer_width(), window->buffer_height());
         context->set_clear_color(clear_color);
         context->clear();
@@ -90,7 +90,7 @@ auto entry() -> int {
                 renderer->quad(position, {20.0f, 20.0f}, glm::vec4{1.0f});
             }
         }
-        renderer->quad(cursor_world_position(), glm::vec2{10.0f}, glm::vec4{1.0f, 0.0f, 0.0f, 1.0f});
+        renderer->quad(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
         renderer->end();
 
         renderer->begin_imgui();

@@ -10,6 +10,7 @@
 #define SHELTER_SHADER_HPP
 
 #include <string>
+#include <string_view>
 #include <filesystem>
 
 #include "common.hpp"
@@ -23,11 +24,11 @@
 #include "glm/mat4x4.hpp"
 
 namespace shelter {
-auto make_shader(graphics_context_ref_t context) -> shader_ref_t;
+auto make_shader(graphics_context_ref_t context, std::string const& vs_source, std::string const& fs_source) -> shader_ref_t;
 
 class shader {
 public:
-    shader();
+    shader(std::string const& vs_source, std::string const& fs_source);
     ~shader();
 
     auto bind() const -> void;
