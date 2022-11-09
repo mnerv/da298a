@@ -62,6 +62,8 @@ auto entry() -> int {
         is_running = !window->shouldclose();
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
+        if (window->key(GLFW_KEY_0) == GLFW_PRESS)
+            camera->set_position(glm::vec3{0.0f});
         mouse_pos = window->mouse_pos();
 
         mouse_press.update(window->mouse(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !ImGui::IsAnyItemActive());
