@@ -51,11 +51,18 @@ auto entry() -> int {
     glm::vec2 mouse_start{};
     input_state<bool> mouse_press{false, false};
 
+    auto mouse_pos = window->mouse_pos();
+    auto cursor_world_position = [&] {
+        return glm::vec2(mouse_pos.x, -mouse_pos.y) - glm::vec2(window->width() / 2, -window->height() / 2)
+               + glm::vec2(camera->position().x, camera->position().y);
+    };
+
     auto is_running = true;
     while (is_running) {
         is_running = !window->shouldclose();
         if (window->key(GLFW_KEY_Q) == GLFW_PRESS)
             is_running = false;
+        mouse_pos = window->mouse_pos();
 
         mouse_press.update(window->mouse(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !ImGui::IsAnyItemActive());
         if (mouse_press.current && mouse_press.is_switched()) {
@@ -81,6 +88,7 @@ auto entry() -> int {
                 renderer->quad(position, {20.0f, 20.0f}, glm::vec4{1.0f});
             }
         }
+        renderer->quad(cursor_world_position(), glm::vec2{10.0f}, glm::vec4{1.0f, 0.0f, 0.0f, 1.0f});
         renderer->end();
 
         renderer->begin_imgui();
