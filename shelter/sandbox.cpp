@@ -50,9 +50,8 @@ struct input_state {
 
     auto update(T const& value) {
         previous = current;
-        current = value;
+        current  = value;
     }
-
     auto is_switched() const -> bool {
         return current != previous;
     }
@@ -114,7 +113,7 @@ auto entry() -> int {
 
         renderer->begin_imgui();
         ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_Once);
-        ImGui::SetNextWindowPos({float(window->posx()) + 2.0f, float(window->posy()) + 2.0f}, ImGuiCond_Once);
+        ImGui::SetNextWindowPos({float(window->xpos()) + 2.0f, float(window->ypos()) + 2.0f}, ImGuiCond_Once);
         ImGui::Begin("settings");
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();

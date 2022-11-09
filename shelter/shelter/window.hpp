@@ -34,14 +34,14 @@ public:
     window(window_props const& props);
     ~window();
 
-    [[nodiscard]]auto title()  const -> std::string const& { return m_data.title; }
-    [[nodiscard]]auto width()  const -> std::int32_t { return m_data.width; }
-    [[nodiscard]]auto height() const -> std::int32_t { return m_data.height; }
-    [[nodiscard]]auto buffer_width()  const -> std::uint32_t { return m_data.buffer_width; }
-    [[nodiscard]]auto buffer_height() const -> std::uint32_t { return m_data.buffer_height; }
-    [[nodiscard]]auto posx() const -> std::int32_t { return m_data.posx; }
-    [[nodiscard]]auto posy() const -> std::int32_t { return m_data.posy; }
-    [[nodiscard]]auto native() const -> GLFWwindow* { return m_window; }
+    [[nodiscard]]auto title()  const -> std::string const&;
+    [[nodiscard]]auto width()  const -> std::int32_t;
+    [[nodiscard]]auto height() const -> std::int32_t;
+    [[nodiscard]]auto buffer_width()  const -> std::int32_t;
+    [[nodiscard]]auto buffer_height() const -> std::int32_t;
+    [[nodiscard]]auto xpos() const -> std::int32_t;
+    [[nodiscard]]auto ypos() const -> std::int32_t;
+    [[nodiscard]]auto native() const -> GLFWwindow*;
     [[nodiscard]]auto context() const -> graphics_context_ref_t const&;
     [[nodiscard]]auto renderer() const -> renderer_ref_t const&;
     [[nodiscard]]auto time() const -> double;
@@ -59,6 +59,9 @@ public:
     auto poll() -> void;
 
 private:
+    auto setup_events() -> void;
+
+private:
     GLFWwindow* m_window;
     graphics_context_ref_t m_context{nullptr};
     renderer_ref_t         m_renderer{nullptr};
@@ -67,12 +70,17 @@ private:
         std::string  title;
         std::int32_t width;
         std::int32_t height;
-        std::uint32_t buffer_width;
-        std::uint32_t buffer_height;
+        std::int32_t buffer_width;
+        std::int32_t buffer_height;
+        std::int32_t xpos;
+        std::int32_t ypos;
+        float        xscale;
+        float        yscale;
+    };
+    data m_data;
 
-        std::int32_t posx;
-        std::int32_t posy;
-    } m_data;
+private:
+    static auto user_ptr(GLFWwindow* window) -> data*;
 };
 } // namespace shelter
 
