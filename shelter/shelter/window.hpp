@@ -53,10 +53,13 @@ public:
     auto set_renderer(renderer_ref_t renderer) -> void;
 
     [[nodiscard]]auto shouldclose() const -> bool;
-    [[nodiscard]]auto key(std::int32_t const& key) const -> std::int32_t;
-    [[nodiscard]]auto mouse(std::int32_t const& button) const -> std::int32_t;
     [[nodiscard]]auto mouse_pos() const -> glm::dvec2;
+    [[nodiscard]]auto is_key_up(std::int32_t const& key) const -> bool;
+    [[nodiscard]]auto is_key_down(std::int32_t const& key) const -> bool;
+    [[nodiscard]]auto is_mouse_up(std::int32_t const& button) const -> bool;
+    [[nodiscard]]auto is_mouse_down(std::int32_t const& button) const -> bool;
     auto poll() -> void;
+
 
 private:
     auto setup_events() -> void;
@@ -86,3 +89,4 @@ private:
 
 
 #endif  // SHELTER_WINDOW_HPP
+

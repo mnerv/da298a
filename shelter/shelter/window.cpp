@@ -44,10 +44,10 @@ window::window(window_props const& props) {
         throw std::runtime_error("shelter::window: error: Failed to load glad!");
 
     setup_events();
+    glfwGetFramebufferSize(m_window, &m_data.buffer_width, &m_data.buffer_height);
+    glfwGetWindowPos(m_window, &m_data.xpos, &m_data.ypos);
 }
-window::~window() {
-    glfwTerminate();
-}
+window::~window() { glfwTerminate(); }
 
 auto window::title() const -> std::string const& { return m_data.title; }
 auto window::width() const -> std::int32_t { return m_data.width; }
@@ -88,11 +88,17 @@ auto window::mouse_pos() const -> glm::dvec2 {
     glfwGetCursorPos(m_window, &pos.x, &pos.y);
     return pos;
 }
-auto window::key(std::int32_t const& key) const -> std::int32_t {
-    return glfwGetKey(m_window, key);
+auto window::is_key_up(std::int32_t const& key) const -> bool {
+    return glfwGetKey(m_window, key) == GLFW_RELEASE;
 }
-auto window::mouse(std::int32_t const& button) const -> std::int32_t {
-    return glfwGetMouseButton(m_window, button);
+auto window::is_key_down(std::int32_t const& key) const -> bool {
+    return glfwGetKey(m_window, key) == GLFW_PRESS;
+}
+auto window::is_mouse_up(std::int32_t const& button) const -> bool {
+    return glfwGetMouseButton(m_window, button) == GLFW_RELEASE;
+}
+auto window::is_mouse_down(std::int32_t const& button) const -> bool {
+    return glfwGetMouseButton(m_window, button) == GLFW_PRESS;
 }
 auto window::poll() -> void { glfwPollEvents(); }
 
@@ -153,8 +159,6 @@ auto window::setup_events() -> void {
     //glfwSetDropCallback(m_window, [](GLFWwindow* window, std::int32_t count, char const** paths) {
     //    auto data = window::user_ptr(window);
     //});
-    glfwGetFramebufferSize(m_window, &m_data.buffer_width, &m_data.buffer_height);
-    glfwGetWindowPos(m_window, &m_data.xpos, &m_data.ypos);
 }
 
 auto window::user_ptr(GLFWwindow* window) -> window::data* {
