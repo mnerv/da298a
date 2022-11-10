@@ -50,6 +50,20 @@ void main() {
     color = u_color;
 }
 )";
+static constexpr auto CIRCLE_FRAGMENT_SHADER = R"(#version 410 core
+layout(location = 0) out vec4 color;
+in vec4 io_color;
+in vec2 io_uv;
+
+uniform vec4 u_color;
+
+void main() {
+    if (length(io_uv - 0.5f) < 0.5f)
+        color = u_color;
+    else
+        color = vec4(0.0f);
+}
+)";
 
 renderer::renderer(graphics_context_ref_t context) : m_context(std::move(context)) {
     setup_2d();
@@ -87,34 +101,46 @@ auto renderer::submit(shader_ref_t const& shader, vertex_buffer_ref_t const& vb,
     ib->bind();
     glDrawElements(GL_TRIANGLES, ib->size(), ib->type(), nullptr);
 }
-auto renderer::quad(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void {
-    m_quad.shader->bind();
-    m_quad.shader->upload("u_color", color);
+auto renderer::quad2d(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void {
+    m_quad_shader->bind();
+    m_quad_shader->upload("u_color", color);
     auto model = glm::translate(glm::mat4{1.0f}, glm::vec3{position, 0.0f});
     model = glm::scale(model, glm::vec3{size, 1.0f});
-    m_quad.shader->upload("u_model", model);
-    m_quad.shader->upload("u_view", m_camera->view());
-    m_quad.shader->upload("u_projection", m_camera->projection());
-    m_quad.vertex->bind();
-    m_quad.index->bind();
-    glDrawElements(GL_TRIANGLES, m_quad.index->size(), m_quad.index->type(), nullptr);
+    m_quad_shader->upload("u_model", model);
+    m_quad_shader->upload("u_view", m_camera->view());
+    m_quad_shader->upload("u_projection", m_camera->projection());
+    m_quad_vertex->bind();
+    m_quad_index->bind();
+    glDrawElements(GL_TRIANGLES, m_quad_index->size(), m_quad_index->type(), nullptr);
 }
-auto renderer::line(glm::vec2 const& a, glm::vec2 const& b, glm::vec4 const& color, float const& thickness) -> void {
+auto renderer::line2d(glm::vec2 const& a, glm::vec2 const& b, glm::vec4 const& color, float const& thickness) -> void {
     auto const diff   = b - a;
     auto const length = glm::length(diff);
     auto const angle  = glm::acos(diff.x / length) * (diff.y > 0 ? 1.0f : -1.0f);
-    m_quad.shader->bind();
-    m_quad.shader->upload("u_color", color);
+    m_quad_shader->bind();
+    m_quad_shader->upload("u_color", color);
     auto model = glm::translate(glm::mat4{1.0f}, glm::vec3{a, 0.0f});
     model = glm::rotate(model, angle, {0.0f, 0.0f, 1.0f});
     model = glm::scale(model, glm::vec3{length, thickness, 1.0f});
     model = glm::translate(model, glm::vec3{0.5f, 0.0f, 0.0f});
-    m_quad.shader->upload("u_model", model);
-    m_quad.shader->upload("u_view", m_camera->view());
-    m_quad.shader->upload("u_projection", m_camera->projection());
-    m_quad.vertex->bind();
-    m_quad.index->bind();
-    glDrawElements(GL_TRIANGLES, m_quad.index->size(), m_quad.index->type(), nullptr);
+    m_quad_shader->upload("u_model", model);
+    m_quad_shader->upload("u_view", m_camera->view());
+    m_quad_shader->upload("u_projection", m_camera->projection());
+    m_quad_vertex->bind();
+    m_quad_index->bind();
+    glDrawElements(GL_TRIANGLES, m_quad_index->size(), m_quad_index->type(), nullptr);
+}
+auto renderer::circle2d_fill(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void {
+    auto model = glm::translate(glm::mat4{1.0f}, glm::vec3{position, 0.0f});
+    model = glm::scale(model, glm::vec3{size, 0.0f});
+    m_circle_shader->bind();
+    m_circle_shader->upload("u_color", color);
+    m_circle_shader->upload("u_model", model);
+    m_circle_shader->upload("u_view", m_camera->view());
+    m_circle_shader->upload("u_projection", m_camera->projection());
+    m_quad_vertex->bind();
+    m_quad_index->bind();
+    glDrawElements(GL_TRIANGLES, m_quad_index->size(), m_quad_index->type(), nullptr);
 }
 auto renderer::end() -> void {
     // TODO: clean up
@@ -153,13 +179,15 @@ auto renderer::setup_2d() -> void {
         0, 2, 3
     };
 
-    m_quad.shader = shelter::make_local<shader>(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
-    m_quad.vertex = shelter::make_vertex_buffer_local(m_context, quad_vertices, sizeof(quad_vertices), {
+    m_quad_shader = shelter::make_local<shader>(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
+    m_quad_vertex = shelter::make_vertex_buffer_local(m_context, quad_vertices, sizeof(quad_vertices), {
         {shelter::data_type::vec3, "a_position"},
         {shelter::data_type::vec4, "a_color"},
         {shelter::data_type::vec2, "a_uv"},
     });
-    m_quad.index  = shelter::make_index_buffer_local(m_context, quad_indices, sizeof(quad_indices),
+    m_quad_index  = shelter::make_index_buffer_local(m_context, quad_indices, sizeof(quad_indices),
         static_cast<std::uint32_t>(shelter::length_of(quad_indices)));
+
+    m_circle_shader = shelter::make_local<shader>(DEFAULT_VERTEX_SHADER, CIRCLE_FRAGMENT_SHADER);
 }
 } // namespace shelter

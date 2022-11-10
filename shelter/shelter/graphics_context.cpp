@@ -26,6 +26,10 @@ auto make_graphics_context(window_ref_t window) -> graphics_context_ref_t {
 
 graphics_context::graphics_context(window_ref_t window) : m_window(std::move(window)) {
     info_opengl();
+
+    // FIXME: Hardcode blend mode
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 graphics_context::~graphics_context() = default;
 

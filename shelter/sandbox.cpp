@@ -72,7 +72,7 @@ auto entry() -> int {
         mouse_pos = window->mouse_pos();
 
         mouse_press.update(window->is_mouse_down(GLFW_MOUSE_BUTTON_1) && !ImGui::IsAnyItemActive());
-        mouse_pan.update(mouse_press.current && window->is_key_down(GLFW_KEY_SPACE));
+        mouse_pan.update(window->is_mouse_down(GLFW_MOUSE_BUTTON_MIDDLE));
         mouse_line.update(mouse_press.current && !window->is_key_down(GLFW_KEY_SPACE));
         if (mouse_pan.current && mouse_pan.is_switched()) {
             mouse_start = window->mouse_pos();
@@ -101,12 +101,13 @@ auto entry() -> int {
                 float const offset  = 20.0f;
                 float const padding = 25.0f;
                 glm::vec2 position{(offset + padding) * j, (offset + padding) * i};
-                renderer->quad(position, {20.0f, 20.0f}, glm::vec4{1.0f});
+                renderer->quad2d(position, {20.0f, 20.0f}, glm::vec4{1.0f});
             }
         }
 
-        renderer->line(pointa, pointb, {0.0f, 1.0f, 0.0f, 1.0f}, 2.0f);
-        // renderer->quad(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
+        renderer->line2d(pointa, pointb, {0.0f, 1.0f, 0.0f, 1.0f}, 2.0f);
+        // renderer->quad2d(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
+        renderer->circle2d_fill(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
         renderer->end();
 
         renderer->begin_imgui();
