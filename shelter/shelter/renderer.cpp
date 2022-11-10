@@ -50,19 +50,6 @@ void main() {
     color = u_color;
 }
 )";
-static constexpr auto LINE_FRAGMENT_SHADER = R"(#version 410 core
-layout(location = 0) out vec4 color;
-
-in vec4 io_color;
-in vec2 io_uv;
-
-uniform vec4 u_color;
-
-void main() {
-    color = u_color;
-}
-)";
-
 
 renderer::renderer(graphics_context_ref_t context) : m_context(std::move(context)) {
     setup_2d();
