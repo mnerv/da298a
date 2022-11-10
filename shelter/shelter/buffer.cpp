@@ -14,14 +14,20 @@
 #include "glad/glad.h"
 
 namespace shelter {
-auto make_vertex_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, buffer_layout const& layout) -> vertex_buffer_ref_t {
+auto make_vertex_buffer_local(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, class buffer_layout const& layout) -> vertex_buffer_local_t {
     if (context == nullptr) throw std::runtime_error("shelter::make_vertex_buffer: context cannot be nullptr!");
-    return make_ref<vertex_buffer>(data, byte_size, layout);
+    return make_local<vertex_buffer>(data, byte_size, layout);
+}
+auto make_index_buffer_local(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, std::uint32_t const& size) -> index_buffer_local_t {
+    if (context == nullptr) throw std::runtime_error("shelter::make_index_buffer: context cannot be nullptr!");
+    return make_local<index_buffer>(data, byte_size, size);
 }
 
+auto make_vertex_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, buffer_layout const& layout) -> vertex_buffer_ref_t {
+    return make_vertex_buffer_local(context, data, byte_size, layout);
+}
 auto make_index_buffer(graphics_context_ref_t context, void const* data, std::uint32_t const& byte_size, std::uint32_t const& size) -> index_buffer_ref_t {
-    if (context == nullptr) throw std::runtime_error("shelter::make_index_buffer: context cannot be nullptr!");
-    return make_ref<index_buffer>(data, byte_size, size);
+    return make_index_buffer_local(context, data, byte_size, size);
 }
 
 buffer_layout::buffer_layout(std::initializer_list<buffer_element> const& elements)

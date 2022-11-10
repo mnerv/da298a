@@ -40,6 +40,10 @@ using index_buffer_ref_t     = ref<class index_buffer>;
 using renderer_ref_t         = ref<class renderer>;
 using camera_ref_t           = ref<class camera>;
 
+using shader_local_t           = local<class shader>;
+using vertex_buffer_local_t    = local<class vertex_buffer>;
+using index_buffer_local_t     = local<class index_buffer>;
+
 } // namespace shelter
 
 #endif  // SHELTER_COMMON_HPP

@@ -31,6 +31,7 @@ public:
     auto begin(camera_ref_t const& camera) -> void;
     auto submit(shader_ref_t const& shader, vertex_buffer_ref_t const& vb, index_buffer_ref_t const& ib, glm::mat4 const& model) -> void;
     auto quad(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void;
+    auto line(glm::vec2 const& a, glm::vec2 const& b, glm::vec4 const& color, float const& thickness = 1.0f) -> void;
     auto end() -> void;
 
     auto begin_imgui() const -> void;
@@ -41,11 +42,11 @@ private:
     camera_ref_t           m_camera;
 
     struct data {
-        shader_ref_t        shader{nullptr};
-        index_buffer_ref_t  index{nullptr};
-        vertex_buffer_ref_t vertex{nullptr};
+        shader_local_t        shader{nullptr};
+        index_buffer_local_t  index{nullptr};
+        vertex_buffer_local_t vertex{nullptr};
     };
-    data m_quad;
+    data m_quad{};
 
 private:
     auto setup_2d() -> void;
