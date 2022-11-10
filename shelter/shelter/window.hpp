@@ -58,8 +58,8 @@ public:
     [[nodiscard]]auto is_key_down(std::int32_t const& key) const -> bool;
     [[nodiscard]]auto is_mouse_up(std::int32_t const& button) const -> bool;
     [[nodiscard]]auto is_mouse_down(std::int32_t const& button) const -> bool;
-    auto poll() -> void;
-
+    auto poll() const -> void;
+    auto wait() const -> void;
 
 private:
     auto setup_events() -> void;

@@ -100,7 +100,8 @@ auto window::is_mouse_up(std::int32_t const& button) const -> bool {
 auto window::is_mouse_down(std::int32_t const& button) const -> bool {
     return glfwGetMouseButton(m_window, button) == GLFW_PRESS;
 }
-auto window::poll() -> void { glfwPollEvents(); }
+auto window::poll() const -> void { glfwPollEvents(); }
+auto window::wait() const -> void { glfwWaitEvents(); }
 
 auto window::setup_events() -> void {
     glfwSetWindowUserPointer(m_window, &m_data);
