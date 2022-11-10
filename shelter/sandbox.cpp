@@ -62,8 +62,14 @@ auto entry() -> int {
     glm::vec2 pointa{0.0f};
     glm::vec2 pointb{100.0f};
 
+    auto time = window->time();
+    auto previous = time;
+
     auto is_running = true;
     while (is_running) {
+        previous = time;
+        time = window->time();
+
         is_running = !window->shouldclose();
         if (window->is_key_down(GLFW_KEY_Q))
             is_running = false;
@@ -111,9 +117,11 @@ auto entry() -> int {
         renderer->end();
 
         renderer->begin_imgui();
-        ImGui::SetNextWindowSize({256.0f, 60.0f}, ImGuiCond_Once);
+        ImGui::SetNextWindowSize({256.0f, 72.0f}, ImGuiCond_Once);
         ImGui::SetNextWindowPos({float(window->xpos()) + 2.0f, float(window->ypos()) + 2.0f}, ImGuiCond_Once);
         ImGui::Begin("settings");
+        auto const frametime = time - previous;
+        ImGui::Text("%s", fmt::format("frametime: {:#.3f}s, {:#.2f} fps", frametime, 1.0f / frametime).c_str());
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::End();
         ImGui::Render();
