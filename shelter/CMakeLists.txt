@@ -65,6 +65,7 @@ set(TARGET_SOURCE_FILES
     "shelter/common.hpp"
     "shelter/graphics_context.hpp"
     "shelter/shelter.hpp"
+    "shelter/utility.hpp"
     "shelter/renderer.hpp"
     "shelter/shader.hpp"
     "shelter/window.hpp"

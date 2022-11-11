@@ -16,6 +16,9 @@
 #include "shader.hpp"
 #include "buffer.hpp"
 #include "camera.hpp"
+
+#include "imgui.h"
+#include "imgui_internal.h"
 #include "glm/mat4x4.hpp"
 
 namespace shelter {
@@ -35,8 +38,13 @@ public:
     auto circle2d_fill(glm::vec2 const& position, glm::vec2 const& size, glm::vec4 const& color) -> void;
     auto end() -> void;
 
-    auto begin_imgui() const -> void;
-    auto end_imgui() const -> void;
+    auto begin_imgui() -> void;
+    auto begin_dockspace() -> void;
+    auto end_dockspace() -> void;
+    auto end_imgui() -> void;
+
+    auto dockspace_id() -> ImGuiID { return m_dockspace_id; }
+    auto dockspace_flags() -> ImGuiID { return m_dockspace_flags; }
 
 private:
     graphics_context_ref_t m_context;
@@ -47,6 +55,9 @@ private:
 
     index_buffer_local_t  m_quad_index{nullptr};
     vertex_buffer_local_t m_quad_vertex{nullptr};
+
+    ImGuiDockNodeFlags    m_dockspace_flags;
+    ImGuiID               m_dockspace_id;
 
 private:
     auto setup_2d() -> void;

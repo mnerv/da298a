@@ -9,28 +9,9 @@
 #ifndef SHELTER_COMMON_HPP
 #define SHELTER_COMMON_HPP
 
-#include <memory>
+#include "utility.hpp"
 
 namespace shelter {
-template <typename T>
-using ref = std::shared_ptr<T>;
-template <typename T>
-using local = std::unique_ptr<T>;
-
-template <typename T, typename... Args>
-constexpr auto make_ref(Args&&... args) -> ref<T> {
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
-template <typename T, typename... Args>
-constexpr auto make_local(Args&&... args) -> local<T> {
-    return std::make_unique<T>(std::forward<Args>(args)...);
-}
-
-template <typename T, std::size_t N>
-constexpr auto length_of(T (&)[N]) -> std::size_t {
-    return N;
-}
-
 // Forward declaration
 using window_ref_t           = ref<class window>;
 using graphics_context_ref_t = ref<class graphics_context>;

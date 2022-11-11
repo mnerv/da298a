@@ -146,12 +146,40 @@ auto renderer::end() -> void {
     // TODO: clean up
 }
 
-auto renderer::begin_imgui() const -> void {
+auto renderer::begin_imgui() -> void {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
-auto renderer::end_imgui() const -> void {
+auto renderer::begin_dockspace() -> void {
+    m_dockspace_flags = ImGuiDockNodeFlags_None;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiViewport const* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    window_flags |= ImGuiWindowFlags_NoTitleBar
+                 |  ImGuiWindowFlags_NoCollapse
+                 |  ImGuiWindowFlags_NoResize
+                 |  ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus
+                 |  ImGuiWindowFlags_NoNavFocus;
+    m_dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
+
+    // Submit the DockSpace
+    m_dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(m_dockspace_id, ImVec2(0.0f, 0.0f), m_dockspace_flags);
+}
+auto renderer::end_dockspace() -> void { ImGui::End(); }
+auto renderer::end_imgui() -> void {
+    ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
