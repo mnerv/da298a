@@ -98,6 +98,7 @@ target_compile_options(${TARGET_NAME} PRIVATE ${TARGET_OPTIONS})
 
 set(TARGET_NAME sandbox)
 set(TARGET_SOURCE_FILES
+    "flicker.hpp"
     "sandbox.cpp"
     "vcpkg.json"
 )
