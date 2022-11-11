@@ -54,7 +54,6 @@ auto entry() -> int {
     glm::vec2 mouse_start{};
     input_state<bool> mouse_press{false, false};
     input_state<bool> mouse_pan{false, false};
-    input_state<bool> mouse_line{false, false};
     auto camera = shelter::make_camera();
 
     auto mouse_pos = window->mouse_pos();

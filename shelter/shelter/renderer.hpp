@@ -44,7 +44,7 @@ public:
     auto end_imgui() -> void;
 
     auto dockspace_id() -> ImGuiID { return m_dockspace_id; }
-    auto dockspace_flags() -> ImGuiID { return m_dockspace_flags; }
+    auto dockspace_flags() -> ImGuiDockNodeFlags { return m_dockspace_flags; }
 
 private:
     graphics_context_ref_t m_context;
