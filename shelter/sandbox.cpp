@@ -168,9 +168,9 @@ auto entry() -> int {
         };
         dfs_draw(graph);
 
+        renderer->circle2d_fill({0.0f, 0.0f}, {12.0f, 12.0f}, {0.0f, 0.0f, 0.0f, 1.0f});
+        renderer->circle2d_fill({0.0f, 0.0f}, {8.0f, 8.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
         renderer->circle2d_fill(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
-        renderer->circle2d_fill({0.0f, 0.0f}, {10.0f, 10.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
-        renderer->circle2d_fill({0.0f, 0.0f}, {5.0f, 5.0f}, {0.0f, 0.0f, 0.0f, 1.0f});
         renderer->end();
 
         renderer->begin_imgui();
