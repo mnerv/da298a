@@ -58,7 +58,7 @@ in vec2 io_uv;
 uniform vec4 u_color;
 
 void main() {
-    if (length(io_uv - 0.5f) < 0.5f)
+    if (length(io_uv - 0.5f) < 0.40f)
         color = u_color;
     else
         color = vec4(0.0f);

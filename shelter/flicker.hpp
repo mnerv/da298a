@@ -20,6 +20,7 @@
 #include "shelter/utility.hpp"
 #include "asio.hpp"
 #include "fmt/format.h"
+#include "glm/vec2.hpp"
 
 namespace flicker {
 struct hardware {
@@ -56,16 +57,6 @@ auto emulation_loop(hardware_ref_t hw) -> void {
 
     fmt::print("shelter::hardware ID[{:#02d}] disconnected!\n", hw->id);
 }
-
-
-struct node {
-    using id_t    = std::uint32_t;
-    using edges_t = std::uint32_t[4];
-
-    id_t           id;
-    edges_t        edges;
-    hardware_ref_t hw;
-};
 
 class app {
 public:
@@ -146,7 +137,6 @@ public:
     }
 
     auto is_running() -> bool { return m_is_running; }
-    auto graph() const -> std::array<node, 4> const& { return m_graph; }
 
 private:
     asio::io_context m_io{};
@@ -162,13 +152,6 @@ private:
     std::atomic<bool>           m_is_closing{false};
     std::vector<socket_ref_t>   m_sockets{};
     std::vector<hardware_ref_t> m_hardwares{};
-
-    std::array<node, 4> m_graph{{
-        {1, {3, 2, 0, 0}, nullptr},
-        {2, {4, 0, 0, 1}, nullptr},
-        {3, {0, 4, 1, 0}, nullptr},
-        {4, {0, 0, 2, 3}, nullptr},
-    }};
 };
 } // namespace flicker
 

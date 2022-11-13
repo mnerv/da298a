@@ -7,14 +7,9 @@
  * @copyright Copyright (c) 2022
  */
 #include <iostream>
-#include <chrono>
-#include <thread>
-#include <string>
-#include <array>
-#include <vector>
-#include <memory>
-#include <atomic>
-#include <cmath>
+#include <stack>
+#include <unordered_set>
+#include <algorithm>
 
 #include "fmt/format.h"
 #include "asio.hpp"
@@ -64,6 +59,32 @@ auto entry() -> int {
 
     flicker::app app;
 
+    using edges_t = std::array<std::uint32_t, 4>;
+    struct node {
+        std::uint32_t id;
+        edges_t       edges;  // N, E, S, W
+    };
+
+    std::vector<node> graph{
+    //   id    N   E   S   W
+        { 1, { 0,  2,  7,  6}},
+        { 2, { 3,  0,  0,  1}},
+        { 3, { 4, 15,  2,  0}},
+        { 4, { 0,  0,  4,  5}},
+        { 5, { 0,  4,  0,  0}},
+        { 6, { 0,  1,  0,  0}},
+        { 7, { 1,  0,  8,  0}},
+        { 8, { 7,  0,  0,  9}},
+        { 9, { 0,  8,  0, 10}},
+        {10, { 0,  9,  0, 11}},
+        {11, {12, 10,  0,  0}},
+        {12, {13,  0, 11,  0}},
+        {13, { 0, 14, 12,  0}},
+        {14, {16,  0,  0, 13}},
+        {15, { 0,  0,  0,  3}},
+        {16, { 0,  0, 14,  0}},
+    };
+
     auto is_running = true;
     while (is_running) {
         previous_time = time;
@@ -94,23 +115,62 @@ auto entry() -> int {
         context->clear();
 
         renderer->begin(camera);
-        // for (float i = 0.0f; i < 2.0f; ++i) {
-        //     for (float j = 0.0f; j < 2.0f; ++j) {
-        //         float const offset  = 20.0f;
-        //         float const padding = 50.0f;
-        //         glm::vec2 position{(offset + padding) * j, (offset + padding) * i};
-        //         renderer->quad2d(position, {20.0f, 20.0f}, glm::vec4{1.0f});
-        //     }
-        // }
-        auto const& graph = app.graph();
-        for (std::size_t i = 0; i < graph.size(); ++i) {
-            float const offset  = 20.0f;
-            float const padding = 50.0f;
-            glm::vec2 position{(offset + padding) * i, 0.0f};
-            renderer->quad2d(position, {20.0f, 20.0f}, glm::vec4{1.0f});
-        }
+
+        auto dfs_draw = [&renderer](std::vector<node> const& graph) {
+            struct node_stack {
+                std::uint32_t id;
+                edges_t       edges;
+                glm::vec2     position;
+            };
+            std::stack<node_stack>  stack;
+            std::vector<node_stack> label;
+            stack.push({
+                graph[0].id,
+                graph[0].edges,
+                {0.0f, 0.0f},
+            });
+            while (!stack.empty()) {
+                auto const v = stack.top(); stack.pop();
+                auto const it = std::find_if(std::begin(label), std::end(label), [&v](auto const& s) { return s.id == v.id; });
+                if (it == std::end(label)) {
+                    auto const& edges = v.edges;
+                    label.push_back(v);
+                    float const offset = 60.0f;
+                    float const size   = 25.0f;
+                    renderer->circle2d_fill(v.position, glm::vec2{size}, glm::vec4{1.0f});
+                    for (std::size_t i = 0; i < edges.size(); ++i) {
+                        if (edges[i] == 0) continue;
+                        auto current = v.position;
+                        switch (i) {
+                        case 0:  // North
+                            current.y += offset;
+                            break;
+                        case 1:  // East
+                            current.x += offset;
+                            break;
+                        case 2:  // South
+                            current.y -= offset;
+                            break;
+                        case 3:  // West
+                            current.x -= offset;
+                            break;
+                        }
+                        renderer->line2d(v.position, current, glm::vec4{1.0f}, 1.0f);
+                        auto const index = std::size_t(edges[i] - 1);
+                        stack.push({
+                            graph[index].id,
+                            graph[index].edges,
+                            current,
+                        });
+                    }
+                }
+            }
+        };
+        dfs_draw(graph);
 
         renderer->circle2d_fill(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
+        renderer->circle2d_fill({0.0f, 0.0f}, {10.0f, 10.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
+        renderer->circle2d_fill({0.0f, 0.0f}, {5.0f, 5.0f}, {0.0f, 0.0f, 0.0f, 1.0f});
         renderer->end();
 
         renderer->begin_imgui();
