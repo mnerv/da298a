@@ -3,30 +3,31 @@
 import java.util.Scanner;
 
 public class MainSim {
-    private RoutingTopology rTop = new RoutingTopology();
-
+    
     public static void main(String[] args){
         RouterManager routerManager = new RouterManager();
         Scanner scanner = new Scanner(System.in);
+        String strFireAt = "";
 
         //Välj utgång
         System.out.println("Enter the exiting router (R1, R2...): ");
         String strExitRouter = scanner.nextLine();
 
-        //Sätt eld
-        System.out.println("Choose the location of the fire at router (R1, R2...): ");
-        String strFireAt = scanner.nextLine();
+        System.out.println("How many nodes should be impacted by fire?");
+        int nmbrOfFires = Integer.parseInt(scanner.nextLine());
 
+        for(int i = 0; i<nmbrOfFires; i++){
+            System.out.println("Choose the first location of a fire at router (R1, R2...): ");
+            strFireAt = scanner.nextLine();
 
-        if (strFireAt.compareToIgnoreCase(strExitRouter) == 0){
-            System.out.println("Could not add fire at exit router");
+            if (strFireAt.compareToIgnoreCase(strExitRouter) == 0){
+                System.out.println("Could not add fire at exit router");
+            }
+            else {
+                routerManager.AddFireAtRouter(strFireAt);
+                String results = routerManager.GetShortestPaths(strExitRouter);
+                System.out.print("Results: "+ results);
+            }
         }
-        else {
-            routerManager.AddFireAtRouter(strFireAt);
-            //Vilka vägar är bäst för respektive router
-            String results = routerManager.GetShortestPaths(strExitRouter);
-            System.out.print("Results: "+ results);
-        }
-
     }
 }
