@@ -74,15 +74,31 @@ public class DijkstraAlgorithm {
         int source = start+1;
         int destination = end+1;
         int i = end;
+        int itr = 1;
+        int[] pathArr = new int[len];
         String reversedPath = destination + "R";
         String path = "";
 
         while(true){
-            if(prevNode[i]==i)
+            if(prevNode[i]==i){
                 break;
+            }
+
+            pathArr[itr] = prevNode[i] +1;
 
             reversedPath += " >-- " + (prevNode[i] +1) + "R";
             i = prevNode[i];
+            itr++;
+        }
+        pathArr[0] = destination;
+
+        if((pathArr[0]==1||pathArr[0]==0) && source != destination){
+            for(int k = 1; k<len-1; k++){
+                if(!(pathArr[k]==0)){
+                    break;
+                }
+            }
+            return "No escaperoute";
         }
 
         for(int j = reversedPath.length()-1; j >= 0; j--){
