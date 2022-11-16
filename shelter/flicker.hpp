@@ -1,6 +1,8 @@
 /**
  * @file    flicker.hpp
  * @author  Pratchaya Khansomboon (me@mononerv.dev)
+ * @author  Isac Pettersson
+ * @author  Christian Heisterkamp
  * @brief   Simulation emulation
  * @version 0.0
  * @date    2022-11-11
@@ -16,11 +18,15 @@
 #include <mutex>
 #include <memory>
 #include <vector>
+#include <queue>
+
 
 #include "shelter/utility.hpp"
 #include "asio.hpp"
 #include "fmt/format.h"
 #include "glm/vec2.hpp"
+#include "sky.hpp"
+
 
 namespace flicker {
 struct hardware {
@@ -31,6 +37,12 @@ struct hardware {
     auto loop() -> void {
         // fmt::print("{:#04x}: Hello, World!\n", id);
     }
+};
+
+using edges_t = std::array<std::uint32_t, 4>;
+struct node {
+    std::uint32_t id;
+    edges_t       edges;  // N, E, S, W
 };
 
 using acceptor_t   = asio::ip::tcp::acceptor;
@@ -92,23 +104,110 @@ public:
 
         m_receive = shelter::make_local<std::thread>([this] {
             while(m_is_running) {
-                asio::steady_timer t(m_io, std::chrono::seconds(1));
-                t.wait();
+
+                
+                std::array<char, 256> buf;
+                asio::error_code err;
+                for (size_t i=0; i < m_sockets.size(); i++) {
+                    try
+                    {
+                        auto length = m_sockets[i]->read_some(asio::buffer(buf), err);
+                        if (length == 0) {
+                            continue;
+                        }
+
+                        sky::mcp message{};
+
+                        message.type = (uint8_t) buf[0];
+                       
+                        
+                        for (size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            message.source[j] = (uint8_t)buf[j+1];
+                        }
+
+                        for (size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            message.destination[j] = (uint8_t)buf[j+4];
+                        }
+
+                        for (size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                            message.payload[j] = (uint8_t)buf[j + 7];
+                        }
+
+                        message.crc = (uint8_t)buf[22];
+
+                        m_unsent_messages.push(message);
+
+                    }
+                    catch (const std::exception&)
+                    {
+
+                    }
+                  
+                }
             }
         });
 
         m_send = shelter::make_local<std::thread>([this] {
             while(m_is_running) {
-                asio::steady_timer t(m_io, std::chrono::seconds(1));
-                t.wait();
+                if (!m_unsent_messages.empty()) {
+                    auto message = m_unsent_messages.front();
+                    uint32_t source = 0;
+                    uint32_t destination = 0;
+
+                    source = message.source[0];
+                    source |= message.source[1] << 8;
+                    source |= message.source[2] << 16;
+                    
+                    destination = message.destination[0];
+                    destination |= message.destination[1] << 8;
+                    destination |= message.destination[2] << 16;
+
+                    auto socket = m_sockets[destination-1];
+
+                    auto const& source_node = m_graph[source - 1];
+                    bool found = false;
+                    std::array<char, 256> buf{};
+                    buf[0] = (char) message.type;
+
+                    for (size_t j = 0; j < sizeof(sky::address_t); j++) {
+                        buf[j + 1] = (char) message.source[j];
+                    }
+
+                    for (size_t j = 0; j < sizeof(sky::address_t); j++) {
+                        buf[j + 4] = (char)message.destination[j];
+                    }
+
+                    for (size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                        buf[j + 7] = (char)message.payload[j];
+                    }
+
+                    buf[22] = (char)message.crc;
+
+                    for (size_t i = 0; i < source_node.edges.size(); i++) {
+                        if (source_node.edges[i] == destination) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        socket->send(asio::buffer(buf));
+                    }
+                }
             }
         });
+
+        for (size_t i = 0; i < m_graph.size(); i++)
+        {
+            create_hardware();
+        }
     }
 
     auto create_hardware() -> void {
         if (!m_is_running || m_is_closing) return;
         auto hw = shelter::make_ref<hardware>();
-        hw->id = std::uint32_t(m_hardwares.size());
+        hw->id = m_id++;
         m_hardwares.push_back(hw);
         hw->thread = shelter::make_local<std::thread>(emulation_loop, hw);
     }
@@ -136,6 +235,10 @@ public:
         });
     }
 
+    auto setGraph(std::vector<node> graph) {
+        m_graph = graph;
+    }
+  
     auto is_running() -> bool { return m_is_running; }
 
 private:
@@ -152,6 +255,9 @@ private:
     std::atomic<bool>           m_is_closing{false};
     std::vector<socket_ref_t>   m_sockets{};
     std::vector<hardware_ref_t> m_hardwares{};
+    std::vector<node> m_graph;
+    std::queue<sky::mcp> m_unsent_messages;
+    uint32_t m_id = 1;
 };
 } // namespace flicker
 

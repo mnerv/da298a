@@ -59,13 +59,7 @@ auto entry() -> int {
 
     flicker::app app;
 
-    using edges_t = std::array<std::uint32_t, 4>;
-    struct node {
-        std::uint32_t id;
-        edges_t       edges;  // N, E, S, W
-    };
-
-    std::vector<node> graph{
+    std::vector<flicker::node> graph{
     //   id    N   E   S   W
         { 1, { 0,  2,  6,  0}},
         { 2, { 0,  3,  7,  1}},
@@ -84,6 +78,9 @@ auto entry() -> int {
         {15, {10, 16,  0,  0}},
         {16, {11,  0,  0, 15}},
     };
+
+    app.setGraph(graph);
+
 
     auto is_running = true;
     while (is_running) {
@@ -116,10 +113,10 @@ auto entry() -> int {
 
         renderer->begin(camera);
 
-        auto dfs_draw = [&renderer](std::vector<node> const& graph) {
+        auto dfs_draw = [&renderer](std::vector<flicker::node> const& graph) {
             struct node_stack {
                 std::uint32_t id;
-                edges_t       edges;
+                flicker::edges_t       edges;
                 glm::vec2     position;
             };
             std::stack<node_stack>  stack;
@@ -189,8 +186,6 @@ auto entry() -> int {
         ImGui::SameLine();
         ImGui::Text("%s", app.is_running() ? "running" : "stopped");
 
-        if (ImGui::Button("create"))
-            app.create_hardware();
         ImGui::End();
 
         renderer->end_imgui();
