@@ -16,8 +16,7 @@ using address_t = uint8_t[3];
 using payload_t = uint8_t[15];
 
 //message control protocol
-struct mcp
-{
+struct mcp {
     uint8_t type;
     address_t source;
     address_t destination;

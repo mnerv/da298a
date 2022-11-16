@@ -104,13 +104,10 @@ public:
 
         m_receive = shelter::make_local<std::thread>([this] {
             while(m_is_running) {
-
-                
                 std::array<char, 256> buf;
                 asio::error_code err;
-                for (size_t i=0; i < m_sockets.size(); i++) {
-                    try
-                    {
+                for (std::size_t i=0; i < m_sockets.size(); i++) {
+                    try {
                         auto length = m_sockets[i]->read_some(asio::buffer(buf), err);
                         if (length == 0) {
                             continue;
@@ -118,30 +115,20 @@ public:
 
                         sky::mcp message{};
 
-                        message.type = (uint8_t) buf[0];
-                       
-                        
-                        for (size_t j = 0; j < sizeof(sky::address_t); j++) {
-                            message.source[j] = (uint8_t)buf[j+1];
+                        message.type = (std::uint8_t) buf[0];
+                        for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            message.source[j] = static_cast<std::uint8_t>(buf[j+1]);
                         }
-
-                        for (size_t j = 0; j < sizeof(sky::address_t); j++) {
-                            message.destination[j] = (uint8_t)buf[j+4];
+                        for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            message.destination[j] = static_cast<std::uint8_t>(buf[j+4]);
                         }
-
-                        for (size_t j = 0; j < sizeof(sky::payload_t); j++) {
-                            message.payload[j] = (uint8_t)buf[j + 7];
+                        for (std::size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                            message.payload[j] = static_cast<std::uint8_t>(buf[j + 7]);
                         }
-
-                        message.crc = (uint8_t)buf[22];
-
+                        message.crc = static_cast<std::uint8_t>(buf[22]);
                         m_unsent_messages.push(message);
-
                     }
-                    catch (const std::exception&)
-                    {
-
-                    }
+                    catch (asio::system_error const&) { /* Ignore for now */ }
                   
                 }
             }
@@ -151,8 +138,8 @@ public:
             while(m_is_running) {
                 if (!m_unsent_messages.empty()) {
                     auto message = m_unsent_messages.front();
-                    uint32_t source = 0;
-                    uint32_t destination = 0;
+                    std::uint32_t source = 0;
+                    std::uint32_t destination = 0;
 
                     source = message.source[0];
                     source |= message.source[1] << 8;
@@ -166,40 +153,34 @@ public:
 
                     auto const& source_node = m_graph[source - 1];
                     bool found = false;
-                    std::array<char, 256> buf{};
-                    buf[0] = (char) message.type;
-
-                    for (size_t j = 0; j < sizeof(sky::address_t); j++) {
-                        buf[j + 1] = (char) message.source[j];
-                    }
-
-                    for (size_t j = 0; j < sizeof(sky::address_t); j++) {
-                        buf[j + 4] = (char)message.destination[j];
-                    }
-
-                    for (size_t j = 0; j < sizeof(sky::payload_t); j++) {
-                        buf[j + 7] = (char)message.payload[j];
-                    }
-
-                    buf[22] = (char)message.crc;
-
-                    for (size_t i = 0; i < source_node.edges.size(); i++) {
+                    for (std::size_t i = 0; i < source_node.edges.size(); i++) {
                         if (source_node.edges[i] == destination) {
                             found = true;
                             break;
                         }
                     }
 
-                    if (found)
-                    {
+                    if (found) {
+                        std::array<char, 256> buf{};
+                        buf[0] = (char) message.type;
+                        for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            buf[j + 1] = static_cast<char>(message.source[j]);
+                        }
+                        for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                            buf[j + 4] = static_cast<char>(message.destination[j]);
+                        }
+                        for (std::size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                            buf[j + 7] = static_cast<char>(message.payload[j]);
+                        }
+                        buf[22] = static_cast<char>(message.crc);
+
                         socket->send(asio::buffer(buf));
                     }
                 }
             }
         });
 
-        for (size_t i = 0; i < m_graph.size(); i++)
-        {
+        for (std::size_t i = 0; i < m_graph.size(); i++) {
             create_hardware();
         }
     }
@@ -223,6 +204,7 @@ public:
                 hw->thread->join();
             }
             m_hardwares = {};
+            m_id = 1;
 
             m_acceptor->close();
             m_listen->join();
@@ -240,6 +222,7 @@ public:
     }
   
     auto is_running() -> bool { return m_is_running; }
+    auto is_closing() -> bool { return m_is_closing; }
 
 private:
     asio::io_context m_io{};
@@ -255,9 +238,9 @@ private:
     std::atomic<bool>           m_is_closing{false};
     std::vector<socket_ref_t>   m_sockets{};
     std::vector<hardware_ref_t> m_hardwares{};
-    std::vector<node> m_graph;
-    std::queue<sky::mcp> m_unsent_messages;
-    uint32_t m_id = 1;
+    std::vector<node>           m_graph;
+    std::queue<sky::mcp>        m_unsent_messages;
+    std::uint32_t               m_id{1};
 };
 } // namespace flicker
 

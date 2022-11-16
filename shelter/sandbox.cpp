@@ -184,7 +184,7 @@ auto entry() -> int {
         if (ImGui::Button("stop"))
             app.stop();
         ImGui::SameLine();
-        ImGui::Text("%s", app.is_running() ? "running" : "stopped");
+        ImGui::Text("%s", app.is_running() ? "running" : app.is_closing() ? "closing" : "stopped");
 
         ImGui::End();
 
