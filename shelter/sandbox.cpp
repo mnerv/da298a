@@ -29,7 +29,7 @@ struct input_state {
         previous = current;
         current  = value;
     }
-    auto is_switched() const -> bool {
+    [[nodiscard]] auto is_switched() const -> bool {
         return current != previous;
     }
 };
@@ -58,6 +58,20 @@ auto entry() -> int {
     };
 
     flicker::app app;
+
+    sky::mcp msg{
+        1,
+        {0, 0, 1},
+        {0, 0, 2},
+        {0},
+        0
+    };
+    sky::mcp_buffer bf{};
+    sky::make_mcp_buffer(bf, msg);
+    for (std::size_t i = 0; i < sky::mcp_size; ++i) {
+        fmt::print("{:#04x} ", bf[i]);
+    }
+    fmt::print("\n");
 
     std::vector<flicker::node> graph{
     //   id    N   E   S   W
@@ -107,7 +121,7 @@ auto entry() -> int {
 
         camera->update(window);
 
-        context->viewport(0, 0, std::uint32_t(window->buffer_width()), std::uint32_t(window->buffer_height()));
+        context->viewport(0, 0, window->buffer_width(), window->buffer_height());
         context->set_clear_color(clear_color);
         context->clear();
 

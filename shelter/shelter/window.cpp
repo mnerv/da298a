@@ -6,9 +6,9 @@
  *
  * @copyright Copyright (c) 2022
  */
-#include <stdexcept>
 #include "window.hpp"
 
+#include <stdexcept>
 #include "glad/glad.h"
 
 namespace shelter {
