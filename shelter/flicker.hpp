@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <queue>
+#include <stdlib.h>
 
 
 #include "shelter/utility.hpp"
@@ -29,20 +30,22 @@
 
 
 namespace flicker {
-struct hardware {
-    std::uint32_t               id{};
-    std::atomic<bool>           is_running{false};
-    shelter::local<std::thread> thread{nullptr};
-
-    auto loop() -> void {
-        // fmt::print("{:#04x}: Hello, World!\n", id);
-    }
-};
 
 using edges_t = std::array<std::uint32_t, 4>;
 struct node {
     std::uint32_t id;
     edges_t       edges;  // N, E, S, W
+};
+
+struct hardware {
+    std::uint32_t               id{};
+    std::atomic<bool>           is_running{false};
+    shelter::local<std::thread> thread{nullptr};
+    std::vector<node>           graph{};
+
+    auto loop() -> void {
+        // fmt::print("{:#04x}: Hello, World!\n", id);
+    }
 };
 
 using acceptor_t   = asio::ip::tcp::acceptor;
@@ -61,7 +64,83 @@ auto emulation_loop(hardware_ref_t hw) -> void {
     asio::connect(socket, endpoints);
     fmt::print("shelter::hardware ID[{:#02d}] connected!\n", hw->id);
 
+    asio::error_code err;
+    constexpr std::size_t buffer_size = 128;
     while (hw->is_running) {
+        
+        std::array<char, buffer_size> buf;
+        try
+        {
+            std::size_t length = socket.read_some(asio::buffer(buf), err);
+
+            if (length == 0) {
+                continue;
+            }
+            sky::mcp message{};
+
+            message.type = (std::uint8_t)buf[0];
+            for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                message.source[j] = static_cast<std::uint8_t>(buf[j + 1]);
+            }
+            for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                message.destination[j] = static_cast<std::uint8_t>(buf[j + 4]);
+            }
+            for (std::size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                message.payload[j] = static_cast<std::uint8_t>(buf[j + 7]);
+            }
+            message.crc = static_cast<std::uint8_t>(buf[22]);
+            std::uint32_t source = 0;
+            std::uint32_t destination = 0;
+
+            source = message.source[0];
+            source |= message.source[1] << 8;
+            source |= message.source[2] << 16;
+
+            destination = message.destination[0];
+            destination |= message.destination[1] << 8;
+            destination |= message.destination[2] << 16;
+
+            fmt::print("Source: {}, Destination: {}\n", source, destination);
+        }
+        catch (const std::exception&)
+        {
+
+        }
+       
+        try
+        {
+            uint8_t random_number = rand()%4;
+            auto node = hw->graph[hw->id - 1];
+            auto dest = node.edges[random_number];
+
+            if (dest != 0) {
+                sky::mcp message{};
+                message.type = 0;
+                message.source[0] = (uint8_t) (hw->id & 0x000000FF);
+                message.source[1] = (uint8_t) (hw->id & 0x0000FF00);
+                message.source[2] = (uint8_t) (hw->id & 0x00FF0000);
+                message.destination[0] = (uint8_t)(dest & 0x000000FF);
+                message.destination[1] = (uint8_t)(dest & 0x0000FF00);
+                message.destination[2] = (uint8_t)(dest & 0x00FF0000);
+                buf[0] = (char)message.type;
+                for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                    buf[j + 1] = static_cast<char>(message.source[j]);
+                }
+                for (std::size_t j = 0; j < sizeof(sky::address_t); j++) {
+                    buf[j + 4] = static_cast<char>(message.destination[j]);
+                }
+                for (std::size_t j = 0; j < sizeof(sky::payload_t); j++) {
+                    buf[j + 7] = static_cast<char>(message.payload[j]);
+                }
+                buf[22] = static_cast<char>(message.crc);
+                socket.send(asio::buffer(buf));
+            }
+        }
+        catch (const std::exception&)
+        {
+
+        }
+
         asio::steady_timer t(io, 1s);
         hw->loop();
         t.wait();
@@ -174,7 +253,14 @@ public:
                         }
                         buf[22] = static_cast<char>(message.crc);
 
-                        socket->send(asio::buffer(buf));
+                        try
+                        {
+                            socket->send(asio::buffer(buf));
+                        }
+                        catch (const std::exception&)
+                        {
+
+                        }
                     }
                 }
             }
@@ -189,6 +275,7 @@ public:
         if (!m_is_running || m_is_closing) return;
         auto hw = shelter::make_ref<hardware>();
         hw->id = m_id++;
+        hw->graph = m_graph;
         m_hardwares.push_back(hw);
         hw->thread = shelter::make_local<std::thread>(emulation_loop, hw);
     }
