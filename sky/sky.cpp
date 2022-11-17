@@ -27,6 +27,13 @@ auto make_mcp(mcp_buffer const& src) -> mcp {
     msg.crc = src[offset];
     return msg;
 }
+auto address_to_u32(address_t const& addr) -> uint32_t {
+    uint32_t value = 0;
+    value |= static_cast<uint32_t>(addr[0]) << 0;
+    value |= static_cast<uint32_t>(addr[1]) << 8;
+    value |= static_cast<uint32_t>(addr[2]) << 16;
+    return value;
+}
 
 auto hello() -> char const* { return "sky framework"; }
 }

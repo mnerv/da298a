@@ -29,6 +29,7 @@ using mcp_buffer = uint8_t[mcp_size];
 
 auto make_mcp_buffer(mcp_buffer& dest, mcp const& src) -> void;
 auto make_mcp(mcp_buffer const& src) -> mcp;
+auto address_to_u32(address_t const& addr) -> uint32_t;
 
 auto hello() -> char const*;
 }
