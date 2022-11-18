@@ -92,13 +92,10 @@ public class DijkstraAlgorithm {
         }
         pathArr[0] = destination;
 
-        if((pathArr[0]==1||pathArr[0]==0) && source != destination){
-            for(int k = 1; k<len-1; k++){
-                if(!(pathArr[k]==0)){
-                    break;
-                }
-            }
-            return "No escaperoute";
+        //Om destinationen i listan inte har en korrekt granne finns ingen väg att ta 
+        if(source != destination){
+            if(!(topMatrix[end][pathArr[1]-1]!= -1))
+                return "No escaperoute";
         }
 
         for(int j = reversedPath.length()-1; j >= 0; j--){
