@@ -41,7 +41,6 @@ public class RouterManager {
                 rTop.UpdateTopology(routerNmbr);
 
             }catch(Exception e){
-                System.out.println(rTop.getMatrixSize());
                 System.out.println(e + ". Could not add fire to router");
             }
         }
@@ -50,15 +49,6 @@ public class RouterManager {
         }
 
         return true;
-    }
-
-    //Kanske behövs
-    public void CheckForFire(){
-        for(int i = 0; i<routers.toArray().length; i++){
-            if(routers.get(i).getIsFire()){
-                rTop.UpdateTopology(i+1);
-            }
-        }
     }
 
     //Från router x till vald utgång
@@ -79,10 +69,4 @@ public class RouterManager {
         return strPath;
     }
 
-    //Inte färdig - kanske behövs
-    public boolean routerExists(String routerNmbr){
-        boolean RouterExists = true;
-        //...
-        return RouterExists;
-    }
 }
