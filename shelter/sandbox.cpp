@@ -93,7 +93,7 @@ auto entry() -> int {
         {16, {11,  0,  0, 15}},
     };
 
-    app.setGraph(graph);
+    app.set_graph(graph);
 
 
     auto is_running = true;
