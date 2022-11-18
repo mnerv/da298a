@@ -17,7 +17,7 @@ public class MainSim {
         int nmbrOfFires = Integer.parseInt(scanner.nextLine());
 
         for(int i = 0; i<nmbrOfFires; i++){
-            System.out.println("Choose the first location of a fire at router (R1, R2...): ");
+            System.out.println("Choose the location of a fire at router (R1, R2...): ");
             strFireAt = scanner.nextLine();
 
             if (strFireAt.compareToIgnoreCase(strExitRouter) == 0){
