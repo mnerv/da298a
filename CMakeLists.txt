@@ -5,3 +5,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)         # Generate compile_commands.json f
 
 add_subdirectory(sky)
 add_subdirectory(shelter)
+add_subdirectory(tests)

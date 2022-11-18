@@ -7,7 +7,7 @@
  * @copyright Copyright (c) 2022
  */
 #include "sky.hpp"
-#include <cstring>
+#include <string.h>
 
 namespace sky {
 auto make_mcp_buffer(mcp_buffer& dest, mcp const& src) -> void {
@@ -34,6 +34,9 @@ auto address_to_u32(address_t const& addr) -> uint32_t {
     value |= static_cast<uint32_t>(addr[2]) << 16;
     return value;
 }
-
-auto hello() -> char const* { return "sky framework"; }
+auto u32_to_address(address_t& dest, uint32_t const& addr) -> void {
+    dest[0] = static_cast<uint8_t>((addr & 0x000000FF) >>  0);
+    dest[1] = static_cast<uint8_t>((addr & 0x0000FF00) >>  8);
+    dest[2] = static_cast<uint8_t>((addr & 0x00FF0000) >> 16);
+}
 }

@@ -58,21 +58,6 @@ auto entry() -> int {
     };
 
     flicker::app app;
-
-    sky::mcp msg{
-        1,
-        {0, 0, 1},
-        {0, 0, 2},
-        {0},
-        0
-    };
-    sky::mcp_buffer bf{};
-    sky::make_mcp_buffer(bf, msg);
-    for (std::size_t i = 0; i < sky::mcp_size; ++i) {
-        fmt::print("{:#04x} ", bf[i]);
-    }
-    fmt::print("\n");
-
     std::vector<flicker::node> graph{
     //   id    N   E   S   W
         { 1, { 0,  2,  6,  0}},
