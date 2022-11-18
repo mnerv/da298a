@@ -22,12 +22,13 @@ public class MainSim {
 
             if (strFireAt.compareToIgnoreCase(strExitRouter) == 0){
                 System.out.println("Could not add fire at exit router");
+                System.exit(0);
             }
             else {
                 routerManager.AddFireAtRouter(strFireAt);
-                String results = routerManager.GetShortestPaths(strExitRouter);
-                System.out.print("Results: "+ results);
             }
         }
+        String results = routerManager.GetShortestPaths(strExitRouter);
+        System.out.print("Results: "+ results);
     }
 }
