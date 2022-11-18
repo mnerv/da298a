@@ -16,7 +16,7 @@ void setup() {
 }
 
 void loop() {
-    Serial.println(sky::hello());
+    Serial.println("Hello, World!");
     delay(250);
 }
 
