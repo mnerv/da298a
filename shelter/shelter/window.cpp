@@ -105,15 +105,15 @@ auto window::wait() const -> void { glfwWaitEvents(); }
 
 auto window::setup_events() -> void {
     glfwSetWindowUserPointer(m_window, &m_data);
-    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, std::int32_t width, std::int32_t height) {
-        auto data = window::user_ptr(window);
-        data->width  = width;
-        data->height = height;
+    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* win, std::int32_t width, std::int32_t height) {
+        auto data_ptr = window::user_ptr(win);
+        data_ptr->width  = width;
+        data_ptr->height = height;
     });
-    glfwSetWindowPosCallback(m_window, [](GLFWwindow* window, std::int32_t xpos, std::int32_t ypos) {
-        auto data = window::user_ptr(window);
-        data->xpos = xpos;
-        data->ypos = ypos;
+    glfwSetWindowPosCallback(m_window, [](GLFWwindow* win, std::int32_t xpos, std::int32_t ypos) {
+        auto data_ptr = window::user_ptr(win);
+        data_ptr->xpos = xpos;
+        data_ptr->ypos = ypos;
     });
     //glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, std::int32_t focused) {
     //    auto data = window::user_ptr(window);
@@ -124,16 +124,15 @@ auto window::setup_events() -> void {
     //glfwSetWindowMaximizeCallback(m_window, [](GLFWwindow* window, std::int32_t maximized) {
     //    auto data = window::user_ptr(window);
     //});
-    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, std::int32_t width, std::int32_t height) {
-        auto data = window::user_ptr(window);
-        data->buffer_width  = width;
-        data->buffer_height = height;
+    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* win, std::int32_t width, std::int32_t height) {
+        auto data_ptr = window::user_ptr(win);
+        data_ptr->buffer_width  = width;
+        data_ptr->buffer_height = height;
     });
-    glfwSetWindowContentScaleCallback(m_window,
-    [](GLFWwindow* window, float xscale, float yscale){
-        auto data = window::user_ptr(window);
-        data->xscale = xscale;
-        data->yscale = yscale;
+    glfwSetWindowContentScaleCallback(m_window, [](GLFWwindow* win, float xscale, float yscale){
+        auto data_ptr = window::user_ptr(win);
+        data_ptr->xscale = xscale;
+        data_ptr->yscale = yscale;
     });
     //glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos) {
     //    auto data = window::user_ptr(window);

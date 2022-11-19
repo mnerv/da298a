@@ -44,12 +44,12 @@ if (APPLE)
         "-framework CoreVideo"
         "-framework OpenGL"
     )
-elseif (LINUX)
+elseif (UNIX AND NOT APPLE)
     set(TARGET_LIBRARIES
-        "-dl"
-        "-m"
-        "-GL"
-        "-X11"
+        "-Ldl"
+        "-Lm"
+        "-LGL"
+        "-LX11"
     )
 elseif (WIN32)
     set(TARGET_LIBRARIES "OpenGL32.lib")

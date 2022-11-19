@@ -57,30 +57,6 @@ auto entry() -> int {
                + glm::vec2(camera->position().x, camera->position().y);
     };
 
-    flicker::app app;
-    std::vector<flicker::node> graph{
-    //   id    N   E   S   W
-        { 1, { 0,  2,  6,  0}},
-        { 2, { 0,  3,  7,  1}},
-        { 3, { 0,  4,  0,  2}},
-        { 4, { 0,  5,  8,  3}},
-        { 5, { 0,  0,  9,  4}},
-        { 6, { 1,  7, 10,  0}},
-        { 7, { 2,  0, 11,  6}},
-        { 8, { 4,  9, 12,  0}},
-        { 9, { 5,  0, 13,  8}},
-        {10, { 6, 11, 15,  0}},
-        {11, { 7,  0, 16, 10}},
-        {12, { 8, 13,  0,  0}},
-        {13, { 9, 14,  0, 12}},
-        {14, { 0,  0,  0, 13}},
-        {15, {10, 16,  0,  0}},
-        {16, {11,  0,  0, 15}},
-    };
-
-    app.set_graph(graph);
-
-
     auto is_running = true;
     while (is_running) {
         previous_time = time;
@@ -112,58 +88,6 @@ auto entry() -> int {
 
         renderer->begin(camera);
 
-        auto dfs_draw = [&renderer](std::vector<flicker::node> const& graph) {
-            struct node_stack {
-                std::uint32_t id;
-                flicker::edges_t       edges;
-                glm::vec2     position;
-            };
-            std::stack<node_stack>  stack;
-            std::vector<node_stack> label;
-            stack.push({
-                graph[0].id,
-                graph[0].edges,
-                {0.0f, 0.0f},
-            });
-            while (!stack.empty()) {
-                auto const v = stack.top(); stack.pop();
-                auto const it = std::find_if(std::begin(label), std::end(label), [&v](auto const& s) { return s.id == v.id; });
-                if (it == std::end(label)) {
-                    auto const& edges = v.edges;
-                    label.push_back(v);
-                    float const offset = 60.0f;
-                    float const size   = 25.0f;
-                    renderer->circle2d_fill(v.position, glm::vec2{size}, glm::vec4{1.0f});
-                    for (std::size_t i = 0; i < edges.size(); ++i) {
-                        if (edges[i] == 0) continue;
-                        auto current = v.position;
-                        switch (i) {
-                        case 0:  // North
-                            current.y += offset;
-                            break;
-                        case 1:  // East
-                            current.x += offset;
-                            break;
-                        case 2:  // South
-                            current.y -= offset;
-                            break;
-                        case 3:  // West
-                            current.x -= offset;
-                            break;
-                        }
-                        renderer->line2d(v.position, current, glm::vec4{1.0f}, 1.0f);
-                        auto const index = std::size_t(edges[i] - 1);
-                        stack.push({
-                            graph[index].id,
-                            graph[index].edges,
-                            current,
-                        });
-                    }
-                }
-            }
-        };
-        dfs_draw(graph);
-
         renderer->circle2d_fill({0.0f, 0.0f}, {12.0f, 12.0f}, {0.0f, 0.0f, 0.0f, 1.0f});
         renderer->circle2d_fill({0.0f, 0.0f}, {8.0f, 8.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
         renderer->circle2d_fill(cursor_world_position(), {10.0f, 10.0f}, {1.0f, 0.0f, 0.0f, 1.0f});
@@ -177,13 +101,10 @@ auto entry() -> int {
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::Separator();
 
-        if (ImGui::Button("start"))
-            app.start();
+        if (ImGui::Button("start")) {}
         ImGui::SameLine();
-        if (ImGui::Button("stop"))
-            app.stop();
+        if (ImGui::Button("stop")) {}
         ImGui::SameLine();
-        ImGui::Text("%s", app.is_running() ? "running" : app.is_closing() ? "closing" : "stopped");
 
         ImGui::End();
 
