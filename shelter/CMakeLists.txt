@@ -25,6 +25,7 @@ if (NOT MSVC)
         "-Wpedantic"
         "-Wshadow"
         "-Werror"
+        "-Wno-coroutine"  # Fix ccls LLVM language server warning
     )
 else()
     string(JOIN " " TARGET_DEFINTIONS

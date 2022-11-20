@@ -84,7 +84,7 @@ auto entry() -> int {
 
         camera->update(window);
 
-        context->viewport(0, 0, window->buffer_width(), window->buffer_height());
+        context->viewport(0, 0, std::uint32_t(window->buffer_width()), std::uint32_t(window->buffer_height()));
         context->set_clear_color(clear_color);
         context->clear();
 

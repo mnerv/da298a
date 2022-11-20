@@ -16,6 +16,7 @@
 #include <atomic>
 #include <thread>
 
+#include "fmt/format.h"
 #include "asio.hpp"
 
 namespace flicker {
@@ -30,6 +31,7 @@ public:
     auto start() -> void {
         if (m_is_running) return;
         try {
+            asio::co_spawn(m_context, std::bind(&app::listener, this), asio::detached);
             m_thread = std::thread([this] {
                 m_is_running = true;
                 m_context.run();
@@ -37,7 +39,6 @@ public:
                 m_is_running = false;
                 fmt::print("flicker::app stopped\n");
             });
-            asio::co_spawn(m_context, std::bind(&app::listener, this), asio::detached);
         } catch (asio::system_error const& e) {
             fmt::print("flicker::app {}\n", e.what());
             m_is_running = false;
