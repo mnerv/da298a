@@ -46,10 +46,10 @@ if (APPLE)
     )
 elseif (UNIX AND NOT APPLE)
     set(TARGET_LIBRARIES
-        "-Ldl"
-        "-Lm"
-        "-LGL"
-        "-LX11"
+        "-ldl"
+        "-lm"
+        "-lGL"
+        "-lX11"
     )
 elseif (WIN32)
     set(TARGET_LIBRARIES "OpenGL32.lib")
