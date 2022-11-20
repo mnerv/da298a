@@ -30,6 +30,6 @@ set(TARGET_SOURCE_FILES
 )
 add_library(${TARGET_NAME} STATIC ${TARGET_SOURCE_FILES})
 target_include_directories(${TARGET_NAME} PUBLIC "${PROJECT_SOURCE_DIR}")
-target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
+target_compile_features(${TARGET_NAME} PRIVATE cxx_std_17)
 target_compile_options(${TARGET_NAME} PRIVATE ${TARGET_OPTIONS})
 source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})
