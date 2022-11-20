@@ -57,6 +57,8 @@ auto entry() -> int {
                + glm::vec2(camera->position().x, camera->position().y);
     };
 
+    flicker::app app{3000};
+
     auto is_running = true;
     while (is_running) {
         previous_time = time;
@@ -101,10 +103,13 @@ auto entry() -> int {
         ImGui::ColorEdit3("clear", glm::value_ptr(clear_color));
         ImGui::Separator();
 
-        if (ImGui::Button("start")) {}
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("simulation:");
         ImGui::SameLine();
-        if (ImGui::Button("stop")) {}
-        ImGui::SameLine();
+        if (ImGui::Button(app.is_running() ? "stop " : "start")) {
+            if (app.is_running()) app.stop();
+            else app.start();
+        }
 
         ImGui::End();
 

@@ -78,7 +78,12 @@ set(TARGET_SOURCE_FILES
     "shelter/window.cpp"
 )
 add_library(${TARGET_NAME} OBJECT ${TARGET_SOURCE_FILES})
-target_include_directories(${TARGET_NAME} PUBLIC "${PROJECT_SOURCE_DIR}" PRIVATE "${PROJECT_SOURCE_DIR}/shelter")
+target_include_directories(${TARGET_NAME}
+    PUBLIC "${PROJECT_SOURCE_DIR}"
+    PRIVATE
+    "${PROJECT_SOURCE_DIR}/shelter"
+    "${PROJECT_SOURCE_DIR}/net"
+)
 target_link_libraries(${TARGET_NAME}
     PUBLIC
     Threads::Threads

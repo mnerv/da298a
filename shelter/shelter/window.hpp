@@ -15,6 +15,7 @@
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+#include "asio.hpp"
 
 #include "glm/vec2.hpp"
 
@@ -57,14 +58,14 @@ public:
     [[nodiscard]]auto is_key_down(std::int32_t const& key) const -> bool;
     [[nodiscard]]auto is_mouse_up(std::int32_t const& button) const -> bool;
     [[nodiscard]]auto is_mouse_down(std::int32_t const& button) const -> bool;
-    auto poll() const -> void;
-    auto wait() const -> void;
+    auto poll() -> void;
+    auto wait() -> void;
 
 private:
     auto setup_events() -> void;
 
 private:
-    GLFWwindow* m_window;
+    GLFWwindow*      m_window;
     graphics_context_ref_t m_context{nullptr};
     renderer_ref_t         m_renderer{nullptr};
 
@@ -78,6 +79,7 @@ private:
         std::int32_t ypos;
         float        xscale;
         float        yscale;
+        asio::io_context context;
     };
     data m_data;
 

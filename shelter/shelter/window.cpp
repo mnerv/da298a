@@ -47,7 +47,10 @@ window::window(window_props const& props) {
     glfwGetFramebufferSize(m_window, &m_data.buffer_width, &m_data.buffer_height);
     glfwGetWindowPos(m_window, &m_data.xpos, &m_data.ypos);
 }
-window::~window() { glfwTerminate(); }
+window::~window() {
+    m_data.context.stop();
+    glfwTerminate();
+}
 
 auto window::title() const -> std::string const& { return m_data.title; }
 auto window::width() const -> std::int32_t { return m_data.width; }
@@ -100,8 +103,14 @@ auto window::is_mouse_up(std::int32_t const& button) const -> bool {
 auto window::is_mouse_down(std::int32_t const& button) const -> bool {
     return glfwGetMouseButton(m_window, button) == GLFW_PRESS;
 }
-auto window::poll() const -> void { glfwPollEvents(); }
-auto window::wait() const -> void { glfwWaitEvents(); }
+auto window::poll() -> void {
+    m_data.context.poll();
+    glfwPollEvents();
+}
+auto window::wait() -> void {
+    m_data.context.poll_one();
+    glfwWaitEvents();
+}
 
 auto window::setup_events() -> void {
     glfwSetWindowUserPointer(m_window, &m_data);
