@@ -105,60 +105,58 @@ auto window::wait() const -> void { glfwWaitEvents(); }
 
 auto window::setup_events() -> void {
     glfwSetWindowUserPointer(m_window, &m_data);
-    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* win, std::int32_t width, std::int32_t height) {
-        auto data_ptr = window::user_ptr(win);
+    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window_ptr, std::int32_t width, std::int32_t height) {
+        auto data_ptr = shelter::window::user_ptr(window_ptr);
         data_ptr->width  = width;
         data_ptr->height = height;
     });
-    glfwSetWindowPosCallback(m_window, [](GLFWwindow* win, std::int32_t xpos, std::int32_t ypos) {
-        auto data_ptr = window::user_ptr(win);
+    glfwSetWindowPosCallback(m_window, [](GLFWwindow* window_ptr, std::int32_t xpos, std::int32_t ypos) {
+        auto data_ptr = window::user_ptr(window_ptr);
         data_ptr->xpos = xpos;
         data_ptr->ypos = ypos;
     });
-    //glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, std::int32_t focused) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetWindowIconifyCallback(m_window, [](GLFWwindow* window, std::int32_t iconified) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetWindowMaximizeCallback(m_window, [](GLFWwindow* window, std::int32_t maximized) {
-    //    auto data = window::user_ptr(window);
-    //});
-    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* win, std::int32_t width, std::int32_t height) {
-        auto data_ptr = window::user_ptr(win);
+    glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t focused) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetWindowIconifyCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t iconified) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetWindowMaximizeCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t maximized) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window_ptr, std::int32_t width, std::int32_t height) {
+        auto data_ptr = window::user_ptr(window_ptr);
         data_ptr->buffer_width  = width;
         data_ptr->buffer_height = height;
     });
-    glfwSetWindowContentScaleCallback(m_window, [](GLFWwindow* win, float xscale, float yscale){
-        auto data_ptr = window::user_ptr(win);
+    glfwSetWindowContentScaleCallback(m_window, [](GLFWwindow* window_ptr, float xscale, float yscale){
+        auto data_ptr = window::user_ptr(window_ptr);
         data_ptr->xscale = xscale;
         data_ptr->yscale = yscale;
     });
-    //glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetCursorEnterCallback(m_window, [](GLFWwindow* window, std::int32_t entered) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetMouseButtonCallback(m_window,
-    //[](GLFWwindow* window, std::int32_t button, std::int32_t action, std::int32_t mods) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetScrollCallback(m_window, 
-    //    [](GLFWwindow* window, double xoffset, double yoffset) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetKeyCallback(m_window,
-    //[](GLFWwindow* window, std::int32_t key, std::int32_t code, std::int32_t action, std::int32_t mods) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetCharCallback(m_window,
-    //[](GLFWwindow* window, std::uint32_t codepoint) {
-    //    auto data = window::user_ptr(window);
-    //});
-    //glfwSetDropCallback(m_window, [](GLFWwindow* window, std::int32_t count, char const** paths) {
-    //    auto data = window::user_ptr(window);
-    //});
+    glfwSetCursorPosCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]double xpos, [[maybe_unused]]double ypos) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetCursorEnterCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t entered) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetMouseButtonCallback(m_window,
+    [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t button, [[maybe_unused]]std::int32_t action, [[maybe_unused]]std::int32_t mods) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetScrollCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]double xoffset, [[maybe_unused]]double yoffset) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetKeyCallback(m_window,
+    [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t key, [[maybe_unused]]std::int32_t code, [[maybe_unused]]std::int32_t action, [[maybe_unused]]std::int32_t mods) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetCharCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::uint32_t codepoint) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
+    glfwSetDropCallback(m_window, [](GLFWwindow* window_ptr, [[maybe_unused]]std::int32_t count, [[maybe_unused]]char const** paths) {
+        [[maybe_unused]]auto data_ptr = window::user_ptr(window_ptr);
+    });
 }
 
 auto window::user_ptr(GLFWwindow* window) -> window::data* {
