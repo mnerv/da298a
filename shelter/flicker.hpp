@@ -33,7 +33,6 @@ public:
         try {
             asio::co_spawn(m_context, std::bind(&app::listener, this), asio::detached);
             m_thread = std::thread([this] {
-                m_is_running = true;
                 m_context.run();
                 m_context.reset();
                 m_is_running = false;
@@ -55,6 +54,7 @@ private:
     auto listener() -> asio::awaitable<void> {
         tcp_acceptor_t acceptor(m_context, {asio::ip::tcp::v4(), m_port});
         fmt::print("flicker::app@{}:{}\n", acceptor.local_endpoint().address().to_string(), acceptor.local_endpoint().port());
+        m_is_running = true;
         while (true) {
             auto socket = co_await acceptor.async_accept();
             asio::co_spawn(m_context, receive(std::move(socket)), asio::detached);

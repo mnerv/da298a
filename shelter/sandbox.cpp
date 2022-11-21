@@ -96,7 +96,7 @@ auto entry() -> int {
         renderer->end();
 
         renderer->begin_imgui();
-        ImGui::SetNextWindowPos({float(window->xpos()) + 2.0f, float(window->ypos()) + 2.0f}, ImGuiCond_Once);
+        ImGui::SetNextWindowPos({float(window->xpos()), float(window->ypos())}, ImGuiCond_Once);
         ImGui::Begin("settings");
         auto const frametime = time - previous_time;
         ImGui::Text("%s", fmt::format("frametime: {:#.3f}s, {:#.2f} fps", frametime, 1.0f / frametime).c_str());
