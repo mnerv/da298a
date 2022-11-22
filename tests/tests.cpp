@@ -27,8 +27,13 @@ TEST(sky_framework, convert_address_to_u32) {
 }
 
 TEST(sky_framework, convert_u32_to_address) {
-    // TODO: Test u32 value conversion to address_t
-    ASSERT_TRUE(false);
+    constexpr uint32_t test_address = 1024;
+    sky::address_t output;
+    sky::u32_to_address(output, test_address);
+    constexpr sky::address_t expected_value = { 0x00, 0x04, 0x00 };
+    for (size_t i = 0; i < sizeof(sky::address_t); ++i) {
+        EXPECT_EQ(expected_value[i], output[i]);
+    }
 }
 
 auto main(int argc, char const* argv[]) -> int {
