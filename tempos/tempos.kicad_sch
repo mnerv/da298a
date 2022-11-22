@@ -895,8 +895,21 @@
     (pin "2" (uuid 228b1cb6-24d2-4b46-9183-444a417358cb))
   )
 
+  (sheet (at 224.79 127) (size 48.26 30.48) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid) (color 0 0 0 0))
+    (fill (color 0 0 0 0.0000))
+    (uuid 2c19c399-c4f7-40ce-804e-49fc3383ca4e)
+    (property "Sheet name" "Prototype" (id 0) (at 224.79 126.2884 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheet file" "prototype.kicad_sch" (id 1) (at 224.79 158.0646 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
   (sheet_instances
     (path "/" (page "1"))
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e" (page "2"))
   )
 
   (symbol_instances
@@ -942,6 +955,42 @@
     (path "/712aa9a8-a155-42a3-ab9b-45e313e6831a"
       (reference "#PWR014") (unit 1) (value "GND") (footprint "")
     )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/3c29d72d-e391-4942-8469-a1a227f3d93d"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/3d046c0b-d445-4332-a8e3-cad08dc3d7a5"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/4f84264e-389c-4cb3-b1ef-b18c33e26c32"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/684ab4bf-d763-4862-8762-c7424275837e"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/6ef3b29a-ee7a-4b63-81c1-ce6ddc24bb1c"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/6f3c1782-d190-44d6-b32b-e4547d6c973b"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/7c97b1c9-4321-4174-981f-9646edd3dcd6"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/98a4c6aa-259e-4081-9383-2e60646be403"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/bb7f49a8-37a0-4430-adfe-10237aaa0106"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/bcbec452-6f24-4fa2-bcf6-898df827344a"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/fa4fd627-4259-4330-bbdf-3673be9bdffd"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/fe72663a-120a-4556-9cd5-6bd60258b464"
+      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    )
     (path "/eb30ba93-4b30-413b-b3b4-5dbe10cd6f18"
       (reference "D1") (unit 1) (value "WS2812B") (footprint "")
     )
@@ -965,6 +1014,24 @@
     )
     (path "/61dade2e-4865-4c04-ad23-0928bd197a76"
       (reference "U1") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/2ac05e0a-a519-4fbd-a00c-2a5e9f9d000c"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/3e6f4211-8543-4b21-8501-727ffb144cf7"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/8721c7ed-7c2e-44cf-992d-79845ff9e4f2"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/af3a251f-83a0-463a-a803-386022e5f023"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/d19099b9-5143-4ebb-b89a-345660ee0eeb"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
+    )
+    (path "/2c19c399-c4f7-40ce-804e-49fc3383ca4e/e6e355cc-e4e4-4b24-8b96-bd6fb26a2961"
+      (reference "U?") (unit 1) (value "WeMos_D1_mini") (footprint "Module:WEMOS_D1_mini_light")
     )
   )
 )
