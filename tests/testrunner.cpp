@@ -40,7 +40,7 @@ TEST(sky_framework, make_mcp_from_buffer) {
         1
     };
 
-    sky::mcp data = sky::make_mcp(src);
+    sky::mcp data = sky::mcp_make_from_buffer(src);
     EXPECT_EQ(expected_mcp.type, data.type);
 
     for (auto i = 0; i < 3; i++) {
@@ -55,19 +55,19 @@ TEST(sky_framework, make_mcp_from_buffer) {
 
 }
 
-TEST(sky_framework, convert_address_to_u32) {
+TEST(sky_mcp, convert_address_to_u32) {
     constexpr sky::address_t address = { 0x00, 0x04, 0x00 };
-    uint32_t output = sky::address_to_u32(address);
+    uint32_t output = sky::mcp_address_to_u32(address);
     uint32_t expected_value = 1024;
     fmt::print("{}\n", output);
 
     EXPECT_EQ(expected_value, output);
 }
 
-TEST(sky_framework, convert_u32_to_address) {
+TEST(sky_mcp, convert_u32_to_address) {
     constexpr uint32_t test_address = 1024;
     sky::address_t output;
-    sky::u32_to_address(output, test_address);
+    sky::mcp_u32_to_address(output, test_address);
     constexpr sky::address_t expected_value = { 0x00, 0x04, 0x00 };
     for (size_t i = 0; i < sizeof(sky::address_t); ++i) {
         EXPECT_EQ(expected_value[i], output[i]);
@@ -75,6 +75,18 @@ TEST(sky_framework, convert_u32_to_address) {
     }
     fmt::print("\n");
    
+}
+
+TEST(sky_topo, topo_index_matrix) {
+    ASSERT_TRUE(false);
+}
+
+TEST(sky_topo, topo_set_node_link_cost) {
+    ASSERT_TRUE(false);
+}
+
+TEST(sky_topo, topo_compute_dijkstra) {
+    ASSERT_TRUE(false);
 }
 
 auto main(int argc, char const* argv[]) -> int {

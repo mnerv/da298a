@@ -9,6 +9,7 @@
  */
 #ifndef SKY_TOPO_HPP
 #define SKY_TOPO_HPP
+#include <stddef.h>
 
 #include "mcp.hpp"
 

@@ -24,7 +24,7 @@ endif()
 
 set(TARGET_NAME tests)
 set(TARGET_SOURCE_FILES
-    "tests.cpp"
+    "testrunner.cpp"
 )
 add_executable(${TARGET_NAME} ${TARGET_SOURCE_FILES})
 target_include_directories(${TARGET_NAME} PRIVATE "${PROJECT_SOURCE_DIR}")
