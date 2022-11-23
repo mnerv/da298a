@@ -35,7 +35,7 @@ TEST(sky_framework, make_mcp_from_buffer) {
     sky::mcp expected_mcp = {
         1,
         {0x00, 0x04, 0x00},
-        {0x00, 0x00, 0x01},
+        {0x00, 0x00, 0x01}, 
         {0x00},
         1
     };
