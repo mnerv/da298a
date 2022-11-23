@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(tests VERSION 0.0.0)
+project(tests VERSION 0.0.1)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)  # Group CMake targets inside a folder
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)         # Generate compile_commands.json for language servers
 
@@ -24,6 +24,9 @@ endif()
 
 set(TARGET_NAME testrunner)
 set(TARGET_SOURCE_FILES
+    "mcp_tests.hpp"
+    "topo_tests.hpp"
+
     "testrunner.cpp"
 )
 add_executable(${TARGET_NAME} ${TARGET_SOURCE_FILES})

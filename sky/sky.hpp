@@ -14,4 +14,4 @@
 #include "mcp.hpp"
 #include "topo.hpp"
 
-#endif  // SKY_SKY_HPP
+#endif  // !SKY_SKY_HPP

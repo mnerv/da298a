@@ -25,7 +25,7 @@ struct topo {
 
 auto topo_index_matrix(topo const& topology, uint32_t row, uint32_t column) -> uint8_t;
 auto topo_set_node_link_cost(topo& topology, uint32_t node_id, uint8_t cost) -> void;
-auto topo_compute_dijkstra(topo const& topology, uint32_t src, uint32_t destination, topo_shortest_t& shortest_path) -> void;
+auto topo_compute_dijkstra(topo const& topology, uint32_t src, uint32_t dest, topo_shortest_t& out_shortest) -> void;
 
 } // namespace sky
 

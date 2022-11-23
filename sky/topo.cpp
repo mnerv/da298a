@@ -18,7 +18,7 @@ auto topo_set_node_link_cost([[maybe_unused]]topo& topology, [[maybe_unused]]uin
 
 }
 
-auto topo_compute_dijkstra([[maybe_unused]]topo const& topology, [[maybe_unused]]uint32_t src, [[maybe_unused]]uint32_t destination, [[maybe_unused]]topo_shortest_t& shortest_path) -> void {
+auto topo_compute_dijkstra([[maybe_unused]]topo const& topology, [[maybe_unused]]uint32_t src, [[maybe_unused]]uint32_t dest, [[maybe_unused]]topo_shortest_t& out_shortest) -> void {
 
 }
 }
