@@ -19,34 +19,39 @@ TEST(sky_framework, make_buffer_from_mcp) {
 
 TEST(sky_framework, make_mcp_from_buffer) {
     //In sky.hpp -> auto make_mcp(mcp_buffer const& src) -> mcp;
-    sky::mcp_buffer src = { 0x00, 0x04, 0x00 };
-    sky::address_t address_source = { 0x00, 0x00, 0x01 };
+    sky::mcp_buffer src = {};
+    src[0] = 1;
+    src[1] = 0x00;
+    src[2] = 0x04;
+    src[3] = 0x00;
+    src[4] = 0x00;
+    src[5] = 0x00;
+    src[6] = 0x01;
+    src[22] = 1;
+
+    for (uint8_t i = 0; i < 15; i++) {
+        src[i + 7] = 0x00;
+    }
     sky::mcp expected_mcp = {
         1,
         {0x00, 0x04, 0x00},
-        {0x00, 0x01, 0x00},
+        {0x00, 0x00, 0x01},
         {0x00},
         1
     };
 
-    
-    mcp message{
-        1,
-        {0, 0, 255},
-        {0, 0, 2},
-        {15},
-        1
-    };
+    sky::mcp data = sky::make_mcp(src);
+    EXPECT_EQ(expected_mcp.type, data.type);
 
-    uint8_t* data = (uint8_t*)&message;
-    for (auto i = 0; i < sizeof(mcp); ++i) {
-        fmt::print("{:#04x} ", data[i]);
+    for (auto i = 0; i < 3; i++) {
+        EXPECT_EQ(expected_mcp.source[i], data.source[i]);
+        EXPECT_EQ(expected_mcp.destination[i], data.destination[i]);
     }
-    fmt::print("\n");
 
-    //sky::mcp the_mcp = 
-    //EXPECT_EQ(expected_value, output);
-    fmt::print("{}\n", the_mcp);
+    for (auto i = 0; i < 15; i++) {
+        EXPECT_EQ(expected_mcp.payload[i], data.payload[i]);
+    }
+    EXPECT_EQ(expected_mcp.crc, data.crc);
 
 }
 
