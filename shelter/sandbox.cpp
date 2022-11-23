@@ -58,6 +58,7 @@ auto entry() -> int {
     };
 
     flicker::app app{3000};
+    app.start();
 
     auto is_running = true;
     while (is_running) {
