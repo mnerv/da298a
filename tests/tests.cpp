@@ -7,7 +7,6 @@
  * @date    2022-11-18
  * 
  * @copyright Copyright (c) 2022
- * 
  */
 #include "gtest/gtest.h"
 #include "fmt/format.h"
