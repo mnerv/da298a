@@ -23,8 +23,12 @@ endif()
 
 set(TARGET_NAME ${PROJECT_NAME})
 set(TARGET_SOURCE_FILES
+    "mcp.hpp"
     "sky.hpp"
-    "sky.cpp"
+    "topo.hpp"
+
+    "mcp.cpp"
+    "topo.cpp"
 
     "vcpkg.json"
 )
