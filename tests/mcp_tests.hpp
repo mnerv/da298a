@@ -11,13 +11,43 @@
 #define TESTS_MCP_TESTS_HPP
 #include "mcp.hpp"
 #include "gtest/gtest.h"
+#include "fmt/format.h"
 
-TEST(sky_framework, make_buffer_from_mcp) {
+TEST(sky_mcp, make_buffer_from_mcp) {
     // TODO: Test make_mcp_buffer to output correct value
-    ASSERT_TRUE(false);
+
+    sky::mcp_buffer resultBuffer{ 1, 0x00, 0x04, 0x00, 0x01, 0x00, 0x02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20 };
+    sky::mcp src;
+    
+    src.type = 1;
+    
+    src.source[0] = 0x00;
+    src.source[1] = 0x04;
+    src.source[2] = 0x00;
+    
+    src.destination[0] = 0x01;
+    src.destination[1] = 0x00;
+    src.destination[2] = 0x02;
+    
+    uint8_t val = 1;
+    for (uint8_t i = 0; i < 15; i++) {
+        src.payload[i] = val++;
+    }
+    
+    src.crc = 20;
+
+    sky::mcp_buffer dest = {};
+
+    sky::mcp_make_buffer(dest, src);
+
+    for (size_t i = 0; i < 23; i++)
+    {
+        EXPECT_EQ(resultBuffer[i], dest[i]);
+    
+    }
 }
 
-TEST(sky_framework, make_mcp_from_buffer) {
+TEST(sky_mcp, make_mcp_from_buffer) {
     //In sky.hpp -> auto make_mcp(mcp_buffer const& src) -> mcp;
     sky::mcp_buffer src = {};
     src[0] = 1;
