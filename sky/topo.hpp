@@ -20,13 +20,12 @@ constexpr size_t node_size = 16;
 using topo_shortest_t = address_t[max_path];
 
 struct topo {
-    uint8_t matrix[node_size * node_size];
+    int8_t matrix[node_size][node_size];
 };
 
 auto topo_index_matrix(topo const& topology, uint32_t row, uint32_t column) -> uint8_t;
-auto topo_set_node_link_cost(topo& topology, uint32_t node_id, uint8_t cost) -> void;
+auto topo_set_node_link_cost(topo& topology, uint32_t node_id, uint32_t endNode_id, int8_t cost) -> topo;
 auto topo_compute_dijkstra(topo const& topology, uint32_t src, uint32_t dest, topo_shortest_t& out_shortest) -> void;
-
 } // namespace sky
 
 #endif  // !SKY_TOPO_HPP

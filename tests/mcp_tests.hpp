@@ -11,6 +11,7 @@
 #define TESTS_MCP_TESTS_HPP
 #include "mcp.hpp"
 #include "gtest/gtest.h"
+#include "fmt/format.h"
 
 TEST(sky_framework, make_buffer_from_mcp) {
     // TODO: Test make_mcp_buffer to output correct value
