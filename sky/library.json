@@ -2,7 +2,7 @@
   "name": "sky",
   "build": {
     "flags": [
-        "-std=C++17",
+        "-std=c++17",
         "-Wall",
         "-Wextra",
         "-Wconversion",

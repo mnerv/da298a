@@ -10,11 +10,11 @@
 #include <string.h>
 
 namespace sky {
-auto mcp_make_buffer(mcp_buffer& dest, mcp const& src) -> void {
-    memcpy(dest, &src, mcp_size);
+auto mcp_make_buffer(mcp_buffer_t& dest, mcp const& src) -> void {
+    memcpy(dest, &src, mcp_buffer_size);
 }
 
-auto mcp_make_from_buffer(mcp_buffer const& src) -> mcp {
+auto mcp_make_from_buffer(mcp_buffer_t const& src) -> mcp {
     mcp msg{};
     size_t offset = 0;
     msg.type = src[offset++];
