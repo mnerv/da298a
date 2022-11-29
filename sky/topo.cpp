@@ -16,6 +16,11 @@ auto topo_set_node_link_cost([[maybe_unused]]topo& topology, [[maybe_unused]]uin
 
 }
 
+auto topo_set_node_firemode(topo& topology, uint32_t node_id, uint8_t cost) {
+    topo_set_node_link_cost
+
+}
+
 auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo_shortest_t& out_shortest) -> void {
     int32_t prev_node[node_size]{};
     int32_t min_distance[node_size]{};
