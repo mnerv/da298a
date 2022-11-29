@@ -16,9 +16,13 @@
 #define HARDWARE_BAUD 115200
 #define SOFTWARE_BAUD 4800
 
-#define RX_PIN  D5
-#define TX_PIN  D6
-#define LED_PIN D8
+#define RX_PIN       D5
+#define TX_PIN       D6
+#define LED_PIN      D8
+
+#define SR_CLK_PIN   D7
+#define SR_DATA_PIN  D4
+#define SR_LATCH_PIN D3
 
 static Adafruit_NeoPixel pixel(1, LED_PIN, NEO_RGB + NEO_KHZ800);
 static SoftwareSerial serial(RX_PIN, TX_PIN);
@@ -143,6 +147,10 @@ auto error_routine() -> state {
 void setup() {
     Serial.begin(HARDWARE_BAUD);
     serial.begin(SOFTWARE_BAUD);
+
+    pinMode(SR_CLK_PIN,  OUTPUT);
+    pinMode(SR_DATA_PIN, OUTPUT);
+    pinMode(SR_LATCH_PIN, OUTPUT);
 
     pixel.setBrightness(16);
     pixel.begin();
