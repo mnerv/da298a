@@ -12,9 +12,10 @@
 #include "SoftwareSerial.h"
 
 #include "sky.hpp"
+#include "mode.hpp"
 
 #define HARDWARE_BAUD 115200
-#define SOFTWARE_BAUD 4800
+#define SOFTWARE_BAUD 9600
 
 #define RX_PIN       D5
 #define TX_PIN       D6
@@ -26,16 +27,6 @@
 
 static Adafruit_NeoPixel pixel(1, LED_PIN, NEO_RGB + NEO_KHZ800);
 static SoftwareSerial serial(RX_PIN, TX_PIN);
-
-//0bAB00'0000
-constexpr uint8_t CH0 = 0b0000'0000; 
-constexpr uint8_t CH1 = 0b0000'0001;
-constexpr uint8_t CH2 = 0b0000'0010;
-constexpr uint8_t CH3 = 0b0000'0011;
-
-constexpr uint8_t TX_MODE = 0b0000'0100; //Send
-constexpr uint8_t RX_MODE = 0b0000'0000; //Recive
-
 
 enum class state : uint8_t {
     config,
@@ -76,9 +67,9 @@ auto print_mcp(sky::mcp const& mcp) -> void {
     Serial.println("}");
 }
 
-auto set_mode(uint8_t channel, uint8_t mode) -> void{
+auto set_mode(hw::serial const& ch, hw::mode const& mode) -> void{
     digitalWrite(SR_LATCH_PIN, LOW);
-    shiftOut(SR_DATA_PIN, SR_CLK_PIN, MSBFIRST, channel|mode);
+    shiftOut(SR_DATA_PIN, SR_CLK_PIN, MSBFIRST, ch | mode);
     digitalWrite(SR_LATCH_PIN, HIGH);
 }
 
@@ -86,7 +77,7 @@ auto config_routine() -> state {
     if (current_init_state == init_state::listen) {
         pixel.setPixelColor(0, 0x6f03fc);
         pixel.show();
-        set_mode(CH0, RX_MODE);
+        set_mode(hw::serial::ch0, hw::mode::rx);
         serial.listen();
         current_init_state = init_state::wait_listen;
         return state::config;
@@ -115,7 +106,7 @@ auto config_routine() -> state {
             current_init_state = init_state::read;
         } else {
             current_init_state  = init_state::write;
-            set_mode(CH0, TX_MODE);
+            set_mode(hw::serial::ch0, hw::mode::tx);
         }
     }
 
