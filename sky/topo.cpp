@@ -9,6 +9,7 @@
  * @copyright Copyright (c) 2022
  */
 #include "topo.hpp"
+#include "string.h"
 
 namespace sky {
 /*
