@@ -18,7 +18,7 @@ namespace sky {
 
 constexpr size_t max_path  = 16;
 constexpr size_t node_size = 16;
-using topo_shortest_t = int8_t[max_path];
+using topo_shortest_t = int32_t[max_path];
 
 struct topo {
     int8_t matrix[node_size][node_size];

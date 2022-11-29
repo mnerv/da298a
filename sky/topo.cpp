@@ -160,6 +160,6 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
         path_arr[high] = temp;
     }
 
-    memcpy(out_shortest, path_arr, max_path);
+    memmove(out_shortest, path_arr, max_path);
 }
 }
