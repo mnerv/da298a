@@ -20,9 +20,16 @@ auto topo_set_node_link_cost(topo& topology, uint32_t node_id, uint32_t endNode_
     return topology;
 }
 
-auto topo_set_node_firemode(topo& topology, uint32_t node_id, uint8_t cost) {
-    topo_set_node_link_cost
+auto topo_set_node_firemode(topo& topology, uint32_t node_id) -> void {
 
+    for (uint32_t i = 0; i < node_size; i++) {
+        if (i == node_id - 1) {
+            for (auto j = 0; j < node_size; j++) {
+                topology.matrix[i][j] = -1;
+                topology.matrix[j][node_id-1] = -1;
+            }
+        }
+    }
 }
 
 auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo_shortest_t& out_shortest) -> void {

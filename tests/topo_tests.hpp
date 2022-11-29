@@ -12,8 +12,24 @@
 
 #include "gtest/gtest.h"
 
-TEST(sky_topo, topo_index_matrix) {
-    ASSERT_TRUE(false);
+TEST(sky_topo, topo_set_node_firemode) {
+    sky::topo topology;
+   
+    int8_t expectedMatrix[6][6] = {
+        { -1,-1,-1,-1,-1,-1 },
+        { -1,0,1,1,1,-1 },
+        {- 1,1,0,-1,1,-1 },
+        {- 1,1,-1,0,1,1 },
+        { -1,1,1,1,0,1 },
+        { -1,-1,-1,1,1,0 }
+    };
+
+    topo_set_node_firemode(topology, 1);
+
+    for (auto i = 0; i < 6; i++) {
+        EXPECT_EQ(expectedMatrix[i][0], topology.matrix[i][0]);
+        EXPECT_EQ(expectedMatrix[0][i], topology.matrix[0][i]);
+    }
 }
 
 TEST(sky_topo, topo_set_node_link_cost) {
