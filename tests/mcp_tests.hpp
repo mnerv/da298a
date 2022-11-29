@@ -19,7 +19,7 @@ TEST(sky_framework, make_buffer_from_mcp) {
 
 TEST(sky_framework, make_mcp_from_buffer) {
     //In sky.hpp -> auto make_mcp(mcp_buffer const& src) -> mcp;
-    sky::mcp_buffer src = {};
+    sky::mcp_buffer_t src = {};
     src[0] = 1;
     src[1] = 0x00;
     src[2] = 0x04;
