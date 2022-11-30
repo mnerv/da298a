@@ -25,8 +25,19 @@
 #define SR_DATA_PIN  D3 //Förra D4
 #define SR_LATCH_PIN D7 //Förra D3
 
+#define MSG_REQUEST 0b01010101
+#define MSG_REQUEST_ACK 0b10101010
+
 static Adafruit_NeoPixel pixel(1, LED_PIN, NEO_RGB + NEO_KHZ800);
 static SoftwareSerial serial(RX_PIN, TX_PIN);
+
+hw::serial current_channel = hw::serial::ch0;
+hw::mode current_mode = hw::mode::rx;
+
+uint8_t cfg_count = 5;
+uint8_t temp = 5;
+sky::address_t id;
+
 
 enum class state : uint8_t {
     config,
@@ -73,77 +84,109 @@ auto set_mode(hw::serial const& ch, hw::mode const& mode) -> void{
     digitalWrite(SR_LATCH_PIN, HIGH);
 }
 
-auto config_routine() -> state {
-    if (current_init_state == init_state::listen) {
-        pixel.setPixelColor(0, 0x6f03fc);
-        pixel.show();
-        set_mode(hw::serial::ch0, hw::mode::rx);
-        serial.listen();
-        current_init_state = init_state::wait_listen;
-        return state::config;
-    }
-
-    if (current_init_state == init_state::wait_listen) {
-        if (current_init_state != previous_init_state) {
-            wait_time  = random(250, 3000);  // TODO: make this a constant
-            start_time = millis();
-            previous_init_state = current_init_state;
-        } else {
-            if (millis() - start_time > wait_time) {
-                current_init_state = init_state::done_listen;
-            }
-            pixel.setPixelColor(0, 0xe303fc);
-            pixel.show();
-        }
-    }
-
-    if (current_init_state == init_state::done_listen) {
-        pixel.setPixelColor(0, 0x03dbfc);
-        pixel.show();
-        previous_init_state = current_init_state;
-        if (serial.available() >= static_cast<int>(sky::mcp_buffer_size)) {
-            serial.stopListening();
-            current_init_state = init_state::read;
-        } else {
-            current_init_state  = init_state::write;
-            set_mode(hw::serial::ch0, hw::mode::tx);
-        }
-    }
-
-    if (current_init_state == init_state::read) {
-        pixel.setPixelColor(0, 0xfcad03);
-        pixel.show();
-        sky::mcp_buffer_t buffer{};
-        auto len = serial.read(buffer, sky::mcp_buffer_size);
-        if (len == sky::mcp_buffer_size) {
-            sky::mcp mcp = sky::mcp_make_from_buffer(buffer);
-            print_mcp(mcp);
-            previous_init_state = current_init_state;
-            current_init_state  = init_state::write;
-        }
-    }
-
-    if (current_init_state == init_state::write) {
-        pixel.setPixelColor(0, 0xfc4e03);
-        pixel.show();
-        previous_init_state = current_init_state;
-        if (serial.available() >= static_cast<int>(sky::mcp_buffer_size)) {
-            current_init_state = init_state::read;
-        } else {
+auto handle_packet() -> void {
+    serial.listen();
+    auto deltaTime = (unsigned long) 2000;
+    auto startTime = millis();
+    while (millis() - startTime < deltaTime){
+        if (serial.available() > 23)
+        {
             sky::mcp_buffer_t buffer{};
-            sky::mcp mcp{ 0, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-            sky::mcp_make_buffer(buffer, mcp);
-            serial.write(buffer, sky::mcp_buffer_size);
-            serial.flush();
-            current_init_state = init_state::listen;
+            auto len = serial.read(buffer, sky::mcp_buffer_size);
+            if (len == sky::mcp_buffer_size) {
+                sky::mcp mcp = sky::mcp_make_from_buffer(buffer);
+                print_mcp(mcp);
+            }
+        }
+        
+    }
+}
+
+auto cfg_listen() {
+    set_mode(current_channel, hw::mode::rx);
+    auto deltaTime = (unsigned long)random(250, 2000);
+    auto startTime = millis();
+    while (millis() - startTime < deltaTime){
+        if (serial.available())
+        {
+            auto recived_message = serial.read();
+            if (recived_message == MSG_REQUEST)
+            {
+                set_mode(current_channel, hw::mode::tx);
+                serial.write(MSG_REQUEST_ACK);    //ACK to send
+                serial.flush();
+                set_mode(current_channel, hw::mode::rx);
+                handle_packet();
+            } else if (recived_message == MSG_REQUEST_ACK)
+            {
+                sky::mcp msg;
+                msg.type = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    msg.source[i] = id[i];
+                    msg.destination[i] = 0;
+                }
+                for (int i = 0; i < 15; i++)
+                {
+                    msg.payload[i] = 0;
+                }
+                msg.crc = 0;
+
+                sky::mcp_buffer_t msg_buffer;
+                sky::mcp_make_buffer(msg_buffer, msg);         // Convert to buffer
+                set_mode(current_channel, hw::mode::tx);
+                serial.write(msg_buffer, sizeof(msg_buffer)); // Write buffer back
+                serial.flush();
+                set_mode(current_channel, hw::mode::rx);
+            }
         }
     }
+}
 
-    return state::config;
+auto config_routine() -> state {
+    while (cfg_count > 0) {
+        Serial.printf("-------------- %d --------------\n", cfg_count);
+        cfg_listen();        
+
+        set_mode(current_channel, hw::mode::tx);
+        serial.write(MSG_REQUEST);
+        serial.flush();
+        set_mode(current_channel, hw::mode::rx);
+        while(temp > 0){
+            cfg_listen();
+            temp--;
+        }
+        temp = 5;
+
+        switch (current_channel) {
+            case hw::serial::ch0:
+                current_channel = hw::serial::ch1;
+                break;
+
+            case hw::serial::ch1:
+                    current_channel = hw::serial::ch2;
+                    break;
+
+            case hw::serial::ch2:
+                current_channel = hw::serial::ch3;
+                break;
+
+            case hw::serial::ch3:
+                current_channel = hw::serial::ch0;
+                cfg_count--;
+                break;
+            
+            default:
+                Serial.println("Could not change channel");
+                current_channel = hw::serial::ch0;
+                break;
+        }
+    }
+    return state::idle;
 }
 
 auto idle_routine() -> state {
+    Serial.println("idle");
     return state::idle;
 }
 
@@ -160,6 +203,9 @@ void setup() {
     pinMode(SR_CLK_PIN,  OUTPUT);
     pinMode(SR_DATA_PIN, OUTPUT);
     pinMode(SR_LATCH_PIN, OUTPUT);
+
+    serial.listen();
+
     
     pixel.setBrightness(16);
     pixel.begin();
