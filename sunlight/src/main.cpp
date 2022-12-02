@@ -35,6 +35,10 @@ constexpr uint8_t COM_RX_MODE = 0b0000'0000;  // MAX485 - Receive mode
 constexpr uint8_t COM_TX_MODE = 0b0000'0100;  // MAX485 - Transmit mode
 constexpr uint8_t COM_MAX_CH  = sky::length_of(COM_CHANNEL);  // Number of communication channels 
 
+constexpr uint32_t WAIT_COLOR = 0xFF0000;
+constexpr uint32_t RX_COLOR   = 0x00FF00;
+constexpr uint32_t TX_COLOR   = 0x0000FF; 
+
 static Adafruit_NeoPixel pixel(1, LED_PIN, NEO_RGB + NEO_KHZ800);
 static SoftwareSerial soft(RX_PIN, TX_PIN);
 
@@ -85,6 +89,11 @@ auto print_mcp(sky::mcp const& mcp) -> void {
 
 auto on_message(hdw::packet e) -> void {
     if (e.size != sky::mcp_buffer_size) return;
+    static uint64_t previous_packet_time = 0;
+    auto current_time = millis();
+    auto delta = current_time - previous_packet_time;
+    previous_packet_time = current_time;
+    Serial.printf("%.3fs ",  float(delta) / 1000.0f);
     switch (e.ch) {
     case COM_CHANNEL[0]:
         Serial.print("CHANNEL[0]: ");
@@ -144,11 +153,11 @@ auto packet_event_loop() -> void {
 
     // Waiting packets from the current channel state
     if (current_com_state == com_state::wait) {
-        pixel.setPixelColor(0, 0xFF0000);
+        pixel.setPixelColor(0, WAIT_COLOR);
         pixel.show();
         if (current_com_state != previous_com_state) {
             last_channel_switch = millis();
-            channel_switch_interval = random(25, 50);
+            channel_switch_interval = random(16, 66);  // 60 Hz - 15 Hz wait time between channel switches
         } else {
             if (millis() - last_channel_switch > channel_switch_interval)
                 current_com_state = com_state::done;
@@ -157,7 +166,7 @@ auto packet_event_loop() -> void {
 
     if (current_com_state == com_state::done) {
         if (soft.available()) {
-            pixel.setPixelColor(0, 0x00FF00);
+            pixel.setPixelColor(0, RX_COLOR);
             pixel.show();
             // Read data from serial from the current channel
             // TODO: Check if data length is less than packet data size
@@ -167,7 +176,7 @@ auto packet_event_loop() -> void {
             soft.read(packet.data, packet.size);
             on_message(packet);
         } else if(!packet_queue[com_channel].empty()) {
-           pixel.setPixelColor(0, 0x0000FF);
+           pixel.setPixelColor(0, TX_COLOR);
            pixel.show();
            // No data received, try to transmit data in current channel
            auto const& packet = packet_queue[com_channel].deq();
@@ -201,7 +210,8 @@ void setup() {
 void loop() {
     packet_event_loop();  // Update packet event loop state machine
 
-    if (millis() - start_time > 250) {
+    // Send test message every interval
+    if (millis() - start_time > 125) {
         start_time = millis();
         sky::mcp_buffer_t buffer{};
         sky::mcp mcp{ 0, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
