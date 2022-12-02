@@ -20,6 +20,9 @@
 #define TX_PIN       D6
 #define LED_PIN      D8
 
+#define BUTTON_FIRE D1
+#define BUTTON_RESET D2
+
 #define SR_CLK_PIN   D4
 #define SR_DATA_PIN  D3
 #define SR_LATCH_PIN D7
@@ -39,7 +42,7 @@ constexpr uint32_t WAIT_COLOR = 0xFF0000;
 constexpr uint32_t RX_COLOR   = 0x00FF00;
 constexpr uint32_t TX_COLOR   = 0x0000FF; 
 
-static Adafruit_NeoPixel pixel(1, LED_PIN, NEO_RGB + NEO_KHZ800);
+static Adafruit_NeoPixel pixel(2, LED_PIN, NEO_RGB + NEO_KHZ800);
 static SoftwareSerial soft(RX_PIN, TX_PIN);
 
 // Hardware specific functions and data structures
@@ -50,6 +53,13 @@ struct packet {
     size_t     size{};    // Size of data
     uint8_t    data[32];  // Data buffer
 };
+
+enum class node_state{
+    config,
+    idle,
+    fire
+};
+
 } // namespace hdw
 
 
@@ -65,9 +75,25 @@ uint64_t channel_switch_interval = 35;
 com_state previous_com_state = com_state::receive;
 com_state current_com_state  = com_state::receive;
 
+hdw::node_state current_state = hdw::node_state::config;
+bool verified[COM_MAX_CH] {false};
+uint8_t max_attempts[COM_MAX_CH] {255, 255, 255, 255};
+
+sky::address_t edges[COM_MAX_CH] {};
+
 uint64_t start_time = 0;
 
 sky::queue<hdw::packet, 16> packet_queue[COM_MAX_CH]{};
+
+auto send_message(uint8_t channel, sky::mcp const& mcp) -> void {
+    hdw::packet packet{};
+    packet.ch = COM_CHANNEL[channel];
+    packet.size = sky::mcp_buffer_size;
+    sky::mcp_buffer_t buffer{};
+    sky::mcp_make_buffer(buffer, mcp);
+    memcpy(packet.data, buffer, sky::mcp_buffer_size);
+    packet_queue[channel].enq(packet);
+}
 
 auto print_mcp(sky::mcp const& mcp) -> void {
     sky::address_t id{};
@@ -89,23 +115,71 @@ auto print_mcp(sky::mcp const& mcp) -> void {
 
 auto on_message(hdw::packet e) -> void {
     if (e.size != sky::mcp_buffer_size) return;
-    static uint64_t previous_packet_time = 0;
-    auto current_time = millis();
-    auto delta = current_time - previous_packet_time;
-    previous_packet_time = current_time;
-    Serial.printf("%.3fs ",  float(delta) / 1000.0f);
+    sky::mcp_buffer_t buffer{};
+    memcpy(buffer, e.data, sky::mcp_buffer_size);
+    auto mcp = sky::mcp_make_from_buffer(buffer);
+    //print_mcp(mcp);
     switch (e.ch) {
     case COM_CHANNEL[0]:
-        Serial.print("CHANNEL[0]: ");
+        if (mcp.type == 0)
+        {
+            if (mcp.payload[0] == 1)
+            {
+                memcpy(edges[0], mcp.source, sky::address_size);
+                verified[0] = true;
+            }else{
+                memcpy(mcp.destination, mcp.source, sky::address_size);
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
+                mcp.payload[0] = 1;
+                send_message(0, mcp);
+            } 
+        }
+        
         break;
     case COM_CHANNEL[1]:
-        Serial.print("CHANNEL[1]: ");
+        if (mcp.type == 0)
+        {
+            if (mcp.payload[0] == 1)
+            {
+                memcpy(edges[1], mcp.source, sky::address_size);
+                verified[1] = true;
+            }else{
+                memcpy(mcp.destination, mcp.source, sky::address_size);
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
+                mcp.payload[0] = 1;
+                send_message(1, mcp);
+            } 
+        }
         break;
     case COM_CHANNEL[2]:
-        Serial.print("CHANNEL[2]: ");
+        if (mcp.type == 0)
+        {
+            if (mcp.payload[0] == 1)
+            {
+                memcpy(edges[2], mcp.source, sky::address_size);
+                verified[2] = true;
+            }else{
+                memcpy(mcp.destination, mcp.source, sky::address_size);
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
+                mcp.payload[0] = 1;
+                send_message(2, mcp);
+            } 
+        }
         break;
     case COM_CHANNEL[3]:
-        Serial.print("CHANNEL[3]: ");
+        if (mcp.type == 0)
+        {
+            if (mcp.payload[0] == 1)
+            {
+                memcpy(edges[3], mcp.source, sky::address_size);
+                verified[3] = true;
+            }else{
+                memcpy(mcp.destination, mcp.source, sky::address_size);
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
+                mcp.payload[0] = 1;
+                send_message(3, mcp);
+            } 
+        }
         break;
     default:
         // Serial.print("UNKNOWN CHANNEL: ");
@@ -113,10 +187,7 @@ auto on_message(hdw::packet e) -> void {
     }
 
     if (e.size == sky::mcp_buffer_size) {
-        sky::mcp_buffer_t buffer{};
-        memcpy(buffer, e.data, sky::mcp_buffer_size);
-        auto mcp = sky::mcp_make_from_buffer(buffer);
-        print_mcp(mcp);
+        
     } else {
         // Serial.print("Unknown packet: [");
         // for (size_t i = 0; i < e.size; ++i) {
@@ -125,16 +196,6 @@ auto on_message(hdw::packet e) -> void {
         // }
         // Serial.println("]");
     }
-}
-
-auto send_message(uint8_t channel, sky::mcp const& mcp) -> void {
-    hdw::packet packet{};
-    packet.ch = COM_CHANNEL[channel];
-    packet.size = sky::mcp_buffer_size;
-    sky::mcp_buffer_t buffer{};
-    sky::mcp_make_buffer(buffer, mcp);
-    memcpy(packet.data, buffer, sky::mcp_buffer_size);
-    packet_queue[channel].enq(packet);
 }
 
 auto select_channel(uint8_t channel, uint8_t mode) -> void {
@@ -198,9 +259,14 @@ auto packet_event_loop() -> void {
 void setup() {
     Serial.begin(HARDWARE_BAUD);
 
+    //Communication
     pinMode(SR_CLK_PIN,  OUTPUT);
     pinMode(SR_DATA_PIN, OUTPUT);
     pinMode(SR_LATCH_PIN, OUTPUT);
+
+    //Buttons
+    pinMode(BUTTON_FIRE, INPUT_PULLUP);
+    pinMode(BUTTON_RESET, INPUT);
 
     pixel.begin();
     pixel.setBrightness(16);
@@ -208,8 +274,68 @@ void setup() {
 }
 
 void loop() {
+
     packet_event_loop();  // Update packet event loop state machine
 
+    switch (current_state)
+    {
+    case hdw::node_state::config:{
+        sky::mcp_buffer_t buffer{};
+        sky::mcp mcp{ 0, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+        sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+        sky::mcp_make_buffer(buffer, mcp);
+        if (verified[0] == false && max_attempts[0] > 0)
+        {
+            send_message(0, mcp);
+            max_attempts[0]--;
+        }
+        if (verified[1] == false && max_attempts[1] > 0)
+        {
+            send_message(1, mcp);
+            max_attempts[1]--;
+        }
+        if (verified[2] == false && max_attempts[2] > 0)
+        {
+            send_message(2, mcp);
+            max_attempts[2]--;
+        }
+        if (verified[3] == false && max_attempts[3] > 0)
+        {
+            send_message(3, mcp);
+            max_attempts[3]--;
+        }
+        if (max_attempts[0] == 0 && max_attempts[1] == 0 && max_attempts[2] == 0 && max_attempts[3] == 0)
+        {
+            current_state = hdw::node_state::idle;
+        }
+        break;
+    }
+
+    case hdw::node_state::idle:{
+        //TODO - Send / recive topology
+        pixel.setPixelColor(1, 0, 0, 255);
+        pixel.show();
+        if (digitalRead(BUTTON_FIRE) == LOW)
+        {
+            current_state = hdw::node_state::fire;
+        }
+
+        break;
+    }
+        
+
+    case hdw::node_state::fire:{
+        pixel.setPixelColor(1, 255, 0, 0);
+        pixel.show();
+        break;
+    }
+    
+    default:
+        break;
+    }
+
+    
+    /*
     // Send test message every interval
     if (millis() - start_time > 125) {
         start_time = millis();
@@ -221,5 +347,5 @@ void loop() {
         send_message(1, mcp);
         send_message(2, mcp);
         send_message(3, mcp);
-    }
+    }*/
 }
