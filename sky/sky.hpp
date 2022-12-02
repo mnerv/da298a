@@ -11,7 +11,17 @@
 #ifndef SKY_SKY_HPP
 #define SKY_SKY_HPP
 
+#include <cstddef>
+
 #include "mcp.hpp"
 #include "topo.hpp"
+#include "queue.hpp"
+
+namespace sky {
+template <typename T, std::size_t N>
+constexpr auto length_of(T (&)[N]) -> std::size_t {
+    return N;
+}
+}
 
 #endif  // !SKY_SKY_HPP
