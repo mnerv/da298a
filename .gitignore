@@ -29,6 +29,9 @@ compile_commands.json
 # IntelliJ
 .idea
 
+#ImGui
+imgui.ini
+
 # macOS
 .DS_Store
 .AppleDouble
