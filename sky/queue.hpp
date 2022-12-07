@@ -12,14 +12,19 @@ namespace sky {
 template <typename T, size_t SIZE>
 class queue {
 public:
+    queue() = default;
+    queue(queue const&) = delete;
+    queue& operator=(queue const&) = delete;
+    queue(queue&&) = delete;
+
     auto enq(T const& data) -> void {
-        if (m_size == SIZE) inc(m_head, SIZE);
         m_buffer[m_tail] = data;
         inc(m_tail, SIZE);
-        ++m_size;
+        if (m_size == SIZE) inc(m_head, SIZE);
+        else ++m_size;
     }
 
-    auto deq() -> T {
+    [[nodiscard]] auto deq() noexcept -> T {
         if (m_head == m_tail) return m_buffer[m_head];
         auto const& value = m_buffer[m_head];
         inc(m_head, SIZE);
@@ -27,26 +32,26 @@ public:
         return value;
     }
 
-    auto empty() const -> bool {
+    [[nodiscard]] auto empty() const noexcept -> bool {
         return m_size == 0;
     }
 
-    auto peek(size_t i) const -> T {
+    [[nodiscard]] auto peek(size_t i) const -> T {
         return m_buffer[i];
     }
 
-    auto size() const -> size_t {
+    [[nodiscard]] auto size() const noexcept -> size_t {
         return m_size;
     }
-    auto capacity() const -> size_t {
+    [[nodiscard]] auto capacity() const noexcept -> size_t {
         return SIZE;
     }
 
 private:
-    static auto inc(size_t& value, size_t const& size) -> void {
+    static auto inc(size_t& value, size_t const& size) noexcept -> void {
         value = (value + 1) % size;
     }
-    auto next(size_t const& value) const -> size_t {
+    [[nodiscard]] auto next(size_t const& value) const noexcept -> size_t {
         return (value + 1) % SIZE;
     }
 
