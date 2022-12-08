@@ -10,6 +10,7 @@
 #include "Arduino.h"
 #include "Adafruit_NeoPixel.h"
 #include "SoftwareSerial.h"
+#include "ESP8266WiFi.h"
 
 #include "sky.hpp"
 #include "control_register.hpp"
@@ -30,6 +31,9 @@
 #define BUTTON_FIRE D1
 #define BUTTON_RESET D2
 
+#define SSID "Kom o lek"
+#define PASSWORD "hejhejhej3"
+
 enum class node_state {
     config,
     idle,
@@ -49,6 +53,8 @@ uint32_t pixel_interval = 33;
 static ray::control_register control;
 static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
 static Adafruit_NeoPixel pixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
+
+WiFiClient client;
 
 auto print_mcp(sky::mcp const& mcp) -> void {
     sky::address_t id{};
@@ -99,6 +105,28 @@ void setup() {
     pixel.begin();
     pixel.setBrightness(16);
     pixel.show();
+
+    /*
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, PASSWORD);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.println();
+    }
+    Serial.print("Connected: ");
+    Serial.println(WiFi.localIP());
+    
+    if(!client.connect("192.168.51.201", 3000)){
+        delay(3000);
+    }
+            delay(3000);
+    while(client.available()){
+        auto autoban = client.read();
+        Serial.printf("%02x\n", autoban);
+    }
+    */
+
 }
 
 void loop() {
@@ -181,13 +209,7 @@ void loop() {
         print_packet(ch2);
         print_packet(ch3);
 
-        if (max_config_tries == 0) current_state = node_state::idle;
-        break;
-    }
-    case node_state::idle: {
-        pixel.setPixelColor(0, 0x00FF00);
-        if (millis() - start_time > 250) {
-            start_time = millis();
+        if (max_config_tries == 0) {
             int32_t edge_count = 0;
             for (auto i = 0; i < 4; ++i)
                 if (verified_edges[i]) ++edge_count;
@@ -198,7 +220,90 @@ void loop() {
                 if (i < 4 - 1) Serial.print(", ");
                 else Serial.println("]");
             }
+            
+            current_state = node_state::idle;
         }
+        break;
+    }
+    case node_state::idle: {
+        pixel.setPixelColor(0, 0x00FF00);
+        for (size_t i = 0; i < 4; i++)
+        {
+            if (edges[i][0] != 0)
+            {
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 1, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                mcp.destination[0] = edges[i][0];
+                mcp.destination[1] = edges[i][1];
+                mcp.destination[2] = edges[i][2];
+                for (size_t i = 0; i < 3; i++)
+                {
+                    mcp.payload[i] = mcp.source[i];
+                }
+                for (size_t i = 3; i < 6; i++)
+                {
+                    mcp.payload[i] = edges[0][i-3];
+                    mcp.payload[i+3] = edges[1][i-3];
+                    mcp.payload[i+6] = edges[2][i-3];   
+                    mcp.payload[i+9] = edges[3][i-3];
+                }
+                //Serial.println("Sent: ");
+                //print_mcp(mcp);
+                sky::mcp_make_buffer(buffer, mcp);
+
+                ray::packet pkt{};
+                memcpy(pkt.data, buffer, sky::mcp_buffer_size);
+                pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                pkt.channel = i;
+                for (auto i = 0; i < 16; ++i) com.write(pkt);
+            } 
+        }
+
+        auto handle_message = [](ray::packet const& packet) {
+            if (packet.size != sky::mcp_buffer_size) return;
+            sky::mcp_buffer_t buffer{};
+            memcpy(buffer, packet.data, sky::mcp_buffer_size);
+            auto mcp = sky::mcp_make_from_buffer(buffer);
+            auto channel = packet.channel;
+
+            if (mcp.type == 1) {
+                Serial.printf("Recived from CH: %02x ", channel);
+                print_mcp(mcp);  
+                auto temp = sky::mcp_address_to_u32(mcp.source);
+                for (size_t i = 0; i < 4; i++)
+                {
+                    if (temp != sky::mcp_address_to_u32(edges[i]))
+                    {
+                        //sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                        mcp.destination[0] = edges[i][0];
+                        mcp.destination[1] = edges[i][1];
+                        mcp.destination[2] = edges[i][2];
+                        sky::mcp_make_buffer(buffer, mcp);
+                        ray::packet pkt{};
+                        Serial.printf("Sent on CH: %02x ", i);
+                        print_mcp(mcp);
+                        Serial.println();
+                        sky::mcp_make_buffer(buffer, mcp);
+                        memcpy(pkt.data, buffer, sky::mcp_buffer_size);
+                        pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                        pkt.channel = i;
+                        for (auto i = 0; i < 16; ++i) com.write(pkt);
+                    }
+                }  
+            }
+        };
+
+        auto ch0 = com.read(0);
+        auto ch1 = com.read(1);
+        auto ch2 = com.read(2);
+        auto ch3 = com.read(3);
+
+        handle_message(ch0);
+        handle_message(ch1);
+        handle_message(ch2);
+        handle_message(ch3);
+
         break;
     }
     case node_state::fire: {
