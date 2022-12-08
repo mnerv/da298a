@@ -9,7 +9,6 @@
  */
 #ifndef TEST_TOPO_TESTS_HPP
 #define TEST_TOPO_TESTS_HPP
-
 #include "gtest/gtest.h"
 
 TEST(sky_topo, topo_set_node_firemode) {
@@ -35,6 +34,8 @@ TEST(sky_topo, topo_set_node_firemode) {
 TEST(sky_topo, topo_set_node_link_cost) {
     ASSERT_TRUE(false);
 }
+
+
 
 TEST(sky_topo, topo_compute_dijkstra) {
     sky::topo topology;
