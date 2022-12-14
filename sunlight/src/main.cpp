@@ -47,6 +47,10 @@ sky::address_t edges[ray::MAX_CHANNEL] {};
 bool verified_edges[ray::MAX_CHANNEL] {false, false, false, false};
 uint32_t start_time = 0;
 
+//16 = number of nodes
+sky::address_t address_set[16];
+uint32_t neighbour_list[16][4];
+
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
 
@@ -88,6 +92,52 @@ auto update_shift_register(uint8_t data) -> void {
     digitalWrite(SR_LATCH_PIN, HIGH);
 }
 
+auto saveEdges(){
+    auto index = 0;
+    //16 is number of nodes in system.
+    for (size_t i = 0; i < 16; i++)
+    {
+        if (address_set[i][0] == 0 && address_set[i][1] == 0 && address_set[i][2] == 0){
+            index = i;
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        if (edges[i][0] != 0 && edges[i][1] != 0 && edges[i][2] != 0)
+        {
+            memcpy(address_set[index], edges[i], sky::address_size);
+            index++;
+        }
+    }
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        if (edges[i][0] != 0 && edges[i][1] != 0 && edges[i][2] != 0)
+        {
+            for (size_t j = 0; j < 16; j++)
+            {
+                if (edges[i][0] == address_set[j][0] && edges[i][1] == address_set[j][1] && edges[i][2] == address_set[j][2])
+                {
+                    neighbour_list[0][i] = j;
+                    break;
+                }
+            } 
+        }else{
+            neighbour_list[0][i] = 999;
+        }
+    }
+    
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        Serial.printf("\nMAC Address_set: %02x:%02x:%02x", address_set[i][0], address_set[i][1], address_set[i][2]);
+        Serial.printf("\nNeighbours: [%zu, %zu, %zu, %zu]", neighbour_list[i][0], neighbour_list[i][1], neighbour_list[i][2], neighbour_list[i][3]);
+        
+    }
+}
+
 void setup() {
     Serial.begin(HARDWARE_BAUD);
 
@@ -105,6 +155,19 @@ void setup() {
     pixel.begin();
     pixel.setBrightness(16);
     pixel.show();
+
+    Serial.println();
+    for (size_t i = 0; i < 16; i++)
+    {
+        address_set[i][0] = 0;
+        address_set[i][1] = 0;
+        address_set[i][2] = 0;
+    }
+    
+    sky::mcp_u32_to_address(address_set[0], ESP.getChipId());
+    //Serial.printf("\nMAC Address_set: %02x:%02x:%02x", address_set[0][0], address_set[0][1], address_set[0][2]);
+    //saveEdges();
+
 
     /*
     WiFi.mode(WIFI_STA);
@@ -214,14 +277,15 @@ void loop() {
             for (auto i = 0; i < 4; ++i)
                 if (verified_edges[i]) ++edge_count;
 
-            Serial.printf("connected edges: %d, [", edge_count);
+            Serial.printf("\n\nconnected edges: %d, [", edge_count);
             for (auto i = 0; i < 4; ++i) {
                 Serial.printf("%02x:%02x:%02x", edges[i][0], edges[i][1], edges[i][2]);
                 if (i < 4 - 1) Serial.print(", ");
-                else Serial.println("]");
+                else Serial.println("]\n");
             }
             start_time = 0;
             current_state = node_state::idle;
+            saveEdges();
         }
         break;
     }
@@ -282,7 +346,7 @@ void loop() {
             print_mcp(mcp);
 
             if (mcp.type == 1) {
-                
+
                 for (size_t i = 0; i < 4; i++)
                 {
                     if (packet.channel != i && verified_edges[i] == true)
