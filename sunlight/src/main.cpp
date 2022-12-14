@@ -220,44 +220,56 @@ void loop() {
                 if (i < 4 - 1) Serial.print(", ");
                 else Serial.println("]");
             }
-            
+            start_time = 0;
             current_state = node_state::idle;
         }
         break;
     }
     case node_state::idle: {
-        pixel.setPixelColor(0, 0x00FF00);
+        
         for (size_t i = 0; i < 4; i++)
         {
-            if (edges[i][0] != 0)
+            if (verified_edges[i])
             {
-                sky::mcp_buffer_t buffer{};
-                sky::mcp mcp{ 1, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-                mcp.destination[0] = edges[i][0];
-                mcp.destination[1] = edges[i][1];
-                mcp.destination[2] = edges[i][2];
-                for (size_t i = 0; i < 3; i++)
-                {
-                    mcp.payload[i] = mcp.source[i];
-                }
-                for (size_t i = 3; i < 6; i++)
-                {
-                    mcp.payload[i] = edges[0][i-3];
-                    mcp.payload[i+3] = edges[1][i-3];
-                    mcp.payload[i+6] = edges[2][i-3];   
-                    mcp.payload[i+9] = edges[3][i-3];
-                }
-                //Serial.println("Sent: ");
-                //print_mcp(mcp);
-                sky::mcp_make_buffer(buffer, mcp);
-
-                ray::packet pkt{};
-                memcpy(pkt.data, buffer, sky::mcp_buffer_size);
-                pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-                pkt.channel = i;
-                for (auto i = 0; i < 16; ++i) com.write(pkt);
+                pixel.setPixelColor(i, 0x00FF00);
             } 
+        }
+        
+        if (millis() - start_time > 125) {
+            start_time = millis();
+
+            for (size_t i = 0; i < 4; i++)
+            {
+                if (edges[i][0] != 0)
+                {
+                    sky::mcp_buffer_t buffer{};
+                    sky::mcp mcp{ 1, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                    sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                    mcp.destination[0] = edges[i][0];
+                    mcp.destination[1] = edges[i][1];
+                    mcp.destination[2] = edges[i][2];
+                    for (size_t i = 0; i < 3; i++)
+                    {
+                        mcp.payload[i] = mcp.source[i];
+                    }
+                    for (size_t i = 3; i < 6; i++)
+                    {
+                        mcp.payload[i] = edges[0][i-3];
+                        mcp.payload[i+3] = edges[1][i-3];
+                        mcp.payload[i+6] = edges[2][i-3];   
+                        mcp.payload[i+9] = edges[3][i-3];
+                    }
+                    //Serial.println("Sent: ");
+                    //print_mcp(mcp);
+                    sky::mcp_make_buffer(buffer, mcp);
+
+                    ray::packet pkt{};
+                    memcpy(pkt.data, buffer, sky::mcp_buffer_size);
+                    pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                    pkt.channel = i;
+                    com.write(pkt);
+                } 
+            }
         }
 
         auto handle_message = [](ray::packet const& packet) {
@@ -266,16 +278,15 @@ void loop() {
             memcpy(buffer, packet.data, sky::mcp_buffer_size);
             auto mcp = sky::mcp_make_from_buffer(buffer);
             auto channel = packet.channel;
+            Serial.printf("Recived from CH: %02x ", channel);
+            print_mcp(mcp);
 
             if (mcp.type == 1) {
-                Serial.printf("Recived from CH: %02x ", channel);
-                print_mcp(mcp);  
-                auto temp = sky::mcp_address_to_u32(mcp.source);
+                
                 for (size_t i = 0; i < 4; i++)
                 {
-                    if (temp != sky::mcp_address_to_u32(edges[i]))
+                    if (packet.channel != i && verified_edges[i] == true)
                     {
-                        //sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
                         mcp.destination[0] = edges[i][0];
                         mcp.destination[1] = edges[i][1];
                         mcp.destination[2] = edges[i][2];
@@ -288,7 +299,7 @@ void loop() {
                         memcpy(pkt.data, buffer, sky::mcp_buffer_size);
                         pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
                         pkt.channel = i;
-                        for (auto i = 0; i < 16; ++i) com.write(pkt);
+                        for (auto i = 0; i < 8; ++i) com.write(pkt);
                     }
                 }  
             }
