@@ -24,7 +24,7 @@ auto topo_set_node_firemode(topo& topology, uint32_t node_id) -> void {
 
     for (uint32_t i = 0; i < node_size; i++) {
         if (i == node_id - 1) {
-            for (auto j = 0; j < node_size; j++) {
+            for (uint32_t j = 0; j < node_size; j++) {
                 topology.matrix[i][j] = -1;
                 topology.matrix[j][node_id-1] = -1;
             }
@@ -41,14 +41,14 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
 
     //If node is in firemode
     if (topology.matrix[start][start] == -1) {
-        memset(out_shortest, 0, max_path);
+        memset(out_shortest, 0, max_path * sizeof(int32_t));
         return;
     }
 
     //Initialize unvisited_nodes array and stored nodes array (prev_nodes)
-    for (auto i = 1; i < node_size+1; i++) {
+    for (size_t i = 1; i < node_size + 1; i++) {
         unvisited_nodes[i-1] = i;
-        if (i != src) {
+        if (static_cast<int32_t>(i) != src) {
             min_distance[i-1] = 255;
         }
     }
@@ -59,7 +59,7 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
     bool isempty = true;
     int32_t unvisited_nodes_size = 0;
 
-    for (auto i = 0; i < node_size; i++) {
+    for (uint32_t i = 0; i < node_size; i++) {
         if (unvisited_nodes[i] != 0) {
             isempty = false;
             unvisited_nodes_size++;
@@ -72,7 +72,7 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
         int32_t new_node = -1;
 
         //Get next node 
-        for (auto i = 0; i < unvisited_nodes_size; i++) {
+        for (int32_t i = 0; i < unvisited_nodes_size; i++) {
             if (min_distance[unvisited_nodes[i]-1] < min) {
                 new_node = unvisited_nodes[i] - 1;
                 min = min_distance[i];
@@ -105,9 +105,9 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
         //Compare distances and store nodes in prev_node
         bool contains_node = false;
 
-        for (auto i = 0; i < node_size; i++) {
+        for (size_t i = 0; i < node_size; i++) {
             for (auto j = 0; j < unvisited_nodes_size; j++) {
-                if (unvisited_nodes[j] == i + 1) {
+                if (unvisited_nodes[j] == static_cast<int32_t>(i + 1)) {
                     contains_node = true;
                     break;
                 }
@@ -146,7 +146,7 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
     //If there's no path out (blocked by fire)
     if (src != dest) {
         if (!(topology.matrix[end][path_arr[1] - 1] != -1)) {
-            memset(out_shortest, 0, max_path);
+            memset(out_shortest, 0, max_path * sizeof(int32_t));
             return;
         }
     }

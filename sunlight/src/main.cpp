@@ -55,8 +55,7 @@ sky::address_t address_set[16];
 int32_t neighbour_list[16][4];
 size_t index_address_set = 0;
 
-int8_t topo[16][16];
-
+sky::topo topo;
 
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
@@ -274,7 +273,7 @@ auto createTopo(){
     {
         for (size_t j = 0; j < 16; j++)
         {
-            topo[i][j] = -1;
+            topo.matrix[i][j] = -1;
         }
     }
 
@@ -282,30 +281,39 @@ auto createTopo(){
     {
         if (neighbour_list[i][0] != -1)
         {
-            topo[i][neighbour_list[i][0]] = 1;
+            topo.matrix[i][neighbour_list[i][0]] = 1;
         }
         if (neighbour_list[i][1] != -1)
         {
-            topo[i][neighbour_list[i][1]] = 1;
+            topo.matrix[i][neighbour_list[i][1]] = 1;
         }
         if (neighbour_list[i][2] != -1)
         {
-            topo[i][neighbour_list[i][2]] = 1;
+            topo.matrix[i][neighbour_list[i][2]] = 1;
         }
         if (neighbour_list[i][3] != -1)
         {
-            topo[i][neighbour_list[i][3]] = 1;
+            topo.matrix[i][neighbour_list[i][3]] = 1;
         } 
     }
     for (size_t i = 0; i < 16; i++)
     {
         for (size_t j = 0; j < 16; j++)
         {
-            Serial.print(topo[i][j] > 0 ? '1' : topo[i][j] == -1 ? '-' : '0');
+            Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
             Serial.print(" ");
         }  
         Serial.println();
     }
+}
+
+auto printPath(sky::topo_shortest_t path){
+    Serial.print("\nShortest Path: ");
+    for (size_t i = 0; i < 16; i++)
+    {
+        Serial.print(path[i]);
+    }
+    Serial.println();
 }
 
 void setup() {
@@ -527,6 +535,9 @@ void loop() {
                 updateEdges(mcp);
                 printAddrSetAndNeighbour();
                 createTopo();
+                sky::topo_shortest_t shortestpath;
+                sky::topo_compute_dijkstra(topo, 0, 2, shortestpath);
+                printPath(shortestpath);
                 
                 for (size_t i = 0; i < 4; i++)
                 {
