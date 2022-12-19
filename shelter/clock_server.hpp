@@ -111,7 +111,8 @@ private:
             buffer[6] = (char)since.count() >> 6;
             buffer[7] = (char)since.count() >> 7;
             
-            new_fusion->send(buffer);
+            auto len = new_fusion->send(buffer);
+            (void)len;
         }
     }
 
