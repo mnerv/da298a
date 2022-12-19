@@ -274,6 +274,8 @@ auto createTopo(){
         for (size_t j = 0; j < 16; j++)
         {
             topo.matrix[i][j] = -1;
+            if (i == j)
+                topo.matrix[i][j] = 0;
         }
     }
 
@@ -288,6 +290,7 @@ auto createTopo(){
             topo.matrix[i][neighbour_list[i][1]] = 1;
         }
         if (neighbour_list[i][2] != -1)
+
         {
             topo.matrix[i][neighbour_list[i][2]] = 1;
         }
@@ -300,20 +303,23 @@ auto createTopo(){
     {
         for (size_t j = 0; j < 16; j++)
         {
-            Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
+            //Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
+            Serial.print(topo.matrix[i][j]);
             Serial.print(" ");
         }  
         Serial.println();
     }
 }
 
-auto printPath(sky::topo_shortest_t path){
+
+auto printPath(sky::topo_shortest_t const& path){
     Serial.print("\nShortest Path: ");
     for (size_t i = 0; i < 16; i++)
     {
-        Serial.print(path[i]);
+        Serial.printf("%d", path[i]);
     }
     Serial.println();
+    //Serial.printf("%d\n", path[0]);
 }
 
 void setup() {
@@ -535,9 +541,18 @@ void loop() {
                 updateEdges(mcp);
                 printAddrSetAndNeighbour();
                 createTopo();
-                sky::topo_shortest_t shortestpath;
-                sky::topo_compute_dijkstra(topo, 0, 2, shortestpath);
-                printPath(shortestpath);
+                sky::topo_shortest_t shortestpath{};
+                sky::topo_compute_dijkstra(topo, 1, 3, shortestpath);
+                Serial.print("\nShortest Path: ");
+                for (size_t i = 0; i < 16; i++)
+                {
+                    if (shortestpath[i] != 0)
+                    {
+                        Serial.printf("%d ", shortestpath[i]);
+                    }
+                }
+                Serial.println();
+                //printPath(shortestpath);
                 
                 for (size_t i = 0; i < 4; i++)
                 {
