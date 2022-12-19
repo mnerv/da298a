@@ -53,6 +53,9 @@ sky::address_t address_set[16];
 int32_t neighbour_list[16][4];
 size_t index_address_set = 0;
 
+int8_t topo[16][16];
+
+
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
 
@@ -264,6 +267,45 @@ auto printAddrSetAndNeighbour(){
     }
 }
 
+auto createTopo(){
+    for (size_t i = 0; i < 16; i++)
+    {
+        for (size_t j = 0; j < 16; j++)
+        {
+            topo[i][j] = -1;
+        }
+    }
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        if (neighbour_list[i][0] != -1)
+        {
+            topo[i][neighbour_list[i][0]] = 1;
+        }
+        if (neighbour_list[i][1] != -1)
+        {
+            topo[i][neighbour_list[i][1]] = 1;
+        }
+        if (neighbour_list[i][2] != -1)
+        {
+            topo[i][neighbour_list[i][2]] = 1;
+        }
+        if (neighbour_list[i][3] != -1)
+        {
+            topo[i][neighbour_list[i][3]] = 1;
+        } 
+    }
+    for (size_t i = 0; i < 16; i++)
+    {
+        for (size_t j = 0; j < 16; j++)
+        {
+            Serial.print(topo[i][j] > 0 ? '1' : topo[i][j] == -1 ? '-' : '0');
+            Serial.print(" ");
+        }  
+        Serial.println();
+    }
+}
+
 void setup() {
     Serial.begin(HARDWARE_BAUD);
 
@@ -292,8 +334,15 @@ void setup() {
     
     sky::mcp_u32_to_address(address_set[0], ESP.getChipId());
     index_address_set++;
-    //Serial.printf("\nMAC Address_set: %02x:%02x:%02x", address_set[0][0], address_set[0][1], address_set[0][2]);
-    //saveEdges();
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        neighbour_list[i][0] = -1;
+        neighbour_list[i][1] = -1;
+        neighbour_list[i][2] = -1;
+        neighbour_list[i][3] = -1;
+    }
+    
 
 
     /*
@@ -475,7 +524,8 @@ void loop() {
             if (mcp.type == 1) {
                 updateEdges(mcp);
                 printAddrSetAndNeighbour();
-
+                createTopo();
+                
                 for (size_t i = 0; i < 4; i++)
                 {
                     if (packet.channel != i && verified_edges[i] == true)
