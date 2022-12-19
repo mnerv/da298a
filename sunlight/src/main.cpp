@@ -11,6 +11,7 @@
 #include "Adafruit_NeoPixel.h"
 #include "SoftwareSerial.h"
 #include "ESP8266WiFi.h"
+#include <algorithm>
 
 #include "sky.hpp"
 #include "control_register.hpp"
@@ -49,7 +50,8 @@ uint32_t start_time = 0;
 
 //16 = number of nodes
 sky::address_t address_set[16];
-uint32_t neighbour_list[16][4];
+int32_t neighbour_list[16][4];
+size_t index_address_set = 0;
 
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
@@ -92,7 +94,7 @@ auto update_shift_register(uint8_t data) -> void {
     digitalWrite(SR_LATCH_PIN, HIGH);
 }
 
-auto saveEdges(){
+auto saveMyEdges(){
     auto index = 0;
     //16 is number of nodes in system.
     for (size_t i = 0; i < 16; i++)
@@ -108,6 +110,7 @@ auto saveEdges(){
         if (edges[i][0] != 0 && edges[i][1] != 0 && edges[i][2] != 0)
         {
             memcpy(address_set[index], edges[i], sky::address_size);
+            index_address_set++;
             index++;
         }
     }
@@ -125,16 +128,139 @@ auto saveEdges(){
                 }
             } 
         }else{
-            neighbour_list[0][i] = 999;
+            neighbour_list[0][i] = -1;
         }
     }
-    
+}
 
+auto updateEdges(sky::mcp mcp){
+    //address_set[0] addresser
+    //neighbour_list[0][0] grannar till address
+    Serial.println(index_address_set);
+    sky::address_t mac_addr{
+        mcp.payload[0],
+        mcp.payload[1],
+        mcp.payload[2],
+    };
+
+    sky::address_t neighbour1{
+    mcp.payload[3],
+    mcp.payload[4],
+    mcp.payload[5],
+    };
+
+    sky::address_t neighbour2{
+    mcp.payload[6],
+    mcp.payload[7],
+    mcp.payload[8],
+    };
+
+    sky::address_t neighbour3{
+    mcp.payload[9],
+    mcp.payload[10],
+    mcp.payload[11],
+    };
+
+    sky::address_t neighbour4{
+    mcp.payload[12],
+    mcp.payload[13],
+    mcp.payload[14],
+    };
+    
+    auto exist0 = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mac_addr);
+    });
+    auto exist1 = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour1);
+    });
+    auto exist2 = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour2);
+    });
+    auto exist3 = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour3);
+    });
+    auto exist4 = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour4);
+    });
+
+    auto srcindex = 0;
+
+    if (exist0 != address_set + 16) {
+        srcindex = (size_t)(exist0 - address_set);
+        memcpy(neighbour_list[srcindex], mac_addr, sky::address_size);
+    } else{
+        memcpy(address_set[index_address_set], mac_addr, sky::address_size);
+        srcindex = index_address_set;
+        index_address_set++;
+    }
+
+    if (sky::mcp_address_to_u32(neighbour1) != 0)
+    {
+        if (exist1 != address_set + 16) {
+            auto index = (uint32_t)(exist1 - address_set);
+            neighbour_list[srcindex][0] = index;
+        }else{
+            memcpy(address_set[index_address_set], neighbour1, sky::address_size);
+            neighbour_list[srcindex][0] = index_address_set;
+            index_address_set++;
+        }
+    }else{
+        neighbour_list[srcindex][0] = -1;
+    }
+    
+    if (sky::mcp_address_to_u32(neighbour2) != 0)
+    {
+        if (exist2 != address_set + 16) {
+            auto index = (uint32_t)(exist2 - address_set);
+            neighbour_list[srcindex][1] = index;
+        }else{
+            memcpy(address_set[index_address_set], neighbour2, sky::address_size);
+            neighbour_list[srcindex][1] = index_address_set;
+            index_address_set++;
+        }
+    }else{
+        neighbour_list[srcindex][1] = -1;
+    }
+
+    if (sky::mcp_address_to_u32(neighbour3) != 0)
+    {
+        if (exist3 != address_set + 16) {
+            auto index = (uint32_t)(exist3 - address_set);
+            neighbour_list[srcindex][2] = index;
+        }else{
+            memcpy(address_set[index_address_set], neighbour3, sky::address_size);
+            neighbour_list[srcindex][2] = index_address_set;
+            index_address_set++;
+        }
+    }else{
+        neighbour_list[srcindex][2] = -1;
+    }
+
+    if (sky::mcp_address_to_u32(neighbour4) != 0)
+    {
+        if (exist4 != address_set + 16) {
+            auto index = (uint32_t)(exist4 - address_set);
+            neighbour_list[srcindex][3] = index;
+        }else{
+            memcpy(address_set[index_address_set], neighbour4, sky::address_size);
+            neighbour_list[srcindex][3] = index_address_set;
+            index_address_set++;
+        }
+    }else{
+        neighbour_list[srcindex][3] = -1;
+    }
+}
+
+auto printAddrSetAndNeighbour(){
     for (size_t i = 0; i < 16; i++)
     {
-        Serial.printf("\nMAC Address_set: %02x:%02x:%02x", address_set[i][0], address_set[i][1], address_set[i][2]);
-        Serial.printf("\nNeighbours: [%zu, %zu, %zu, %zu]", neighbour_list[i][0], neighbour_list[i][1], neighbour_list[i][2], neighbour_list[i][3]);
-        
+        Serial.printf("\nAddress_set: %02x:%02x:%02x", address_set[i][0], address_set[i][1], address_set[i][2]);
+        Serial.printf("\nNeighbour list: %d, %d, %d, %d \n", neighbour_list[i][0], neighbour_list[i][1], neighbour_list[i][2], neighbour_list[i][3]);
     }
 }
 
@@ -165,6 +291,7 @@ void setup() {
     }
     
     sky::mcp_u32_to_address(address_set[0], ESP.getChipId());
+    index_address_set++;
     //Serial.printf("\nMAC Address_set: %02x:%02x:%02x", address_set[0][0], address_set[0][1], address_set[0][2]);
     //saveEdges();
 
@@ -285,7 +412,7 @@ void loop() {
             }
             start_time = 0;
             current_state = node_state::idle;
-            saveEdges();
+            saveMyEdges();
         }
         break;
     }
@@ -346,6 +473,8 @@ void loop() {
             print_mcp(mcp);
 
             if (mcp.type == 1) {
+                updateEdges(mcp);
+                printAddrSetAndNeighbour();
 
                 for (size_t i = 0; i < 4; i++)
                 {
