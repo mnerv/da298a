@@ -16,6 +16,7 @@
 
 #include "shelter/shelter.hpp"
 #include "flicker.hpp"
+#include "clock_server.hpp"
 
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/vec4.hpp"
@@ -57,7 +58,10 @@ auto entry() -> int {
                + glm::vec2(camera->position().x, camera->position().y);
     };
 
-    flicker::app app{3000};
+    //flicker::app app{3000};
+    //app.start();
+
+    clock_server::app app(3000);
     app.start();
 
     auto is_running = true;
