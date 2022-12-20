@@ -316,10 +316,12 @@ auto printPath(sky::topo_shortest_t const& path){
     Serial.print("\nShortest Path: ");
     for (size_t i = 0; i < 16; i++)
     {
-        Serial.printf("%d", path[i]);
+        if (path[i] != 0)
+        {
+            Serial.printf("%d ", path[i]);
+        }    
     }
     Serial.println();
-    //Serial.printf("%d\n", path[0]);
 }
 
 void setup() {
@@ -542,17 +544,9 @@ void loop() {
                 printAddrSetAndNeighbour();
                 createTopo();
                 sky::topo_shortest_t shortestpath{};
-                sky::topo_compute_dijkstra(topo, 1, 3, shortestpath);
-                Serial.print("\nShortest Path: ");
-                for (size_t i = 0; i < 16; i++)
-                {
-                    if (shortestpath[i] != 0)
-                    {
-                        Serial.printf("%d ", shortestpath[i]);
-                    }
-                }
-                Serial.println();
-                //printPath(shortestpath);
+
+                sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
+                printPath(shortestpath);
                 
                 for (size_t i = 0; i < 4; i++)
                 {
@@ -573,6 +567,7 @@ void loop() {
                         for (auto i = 0; i < 8; ++i) com.write(pkt);
                     }
                 }  
+
             }
         };
 
@@ -586,9 +581,23 @@ void loop() {
         handle_message(ch2);
         handle_message(ch3);
 
+
+
         break;
     }
     case node_state::fire: {
+        /*sky::topo_set_node_firemode(topo, 1);
+        sky::topo_shortest_t shortestpath{};
+                sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
+                Serial.print("\nSecond Shortest Path: ");
+                for (size_t i = 0; i < 16; i++)
+                {
+                    if (shortestpath[i] != 0)
+                    {
+                        Serial.printf("%d ", shortestpath[i]);
+                    }
+                }
+                Serial.println();*/
         break;
     }
     }
