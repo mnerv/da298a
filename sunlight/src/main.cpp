@@ -18,6 +18,7 @@
 #include "sky.hpp"
 #include "control_register.hpp"
 #include "multicom.hpp"
+#include "config_status.hpp"
 
 #define HARDWARE_BAUD 115200
 #define SOFTWARE_BAUD 9600
@@ -27,12 +28,11 @@
 #define LED_PIN      D8
 #define LED_COUNT    4
 
+#define CONFIG_PIN   A0
+
 #define SR_CLK_PIN   D4  // Shift register clock pin
 #define SR_DATA_PIN  D3  // Shift register data pin
 #define SR_LATCH_PIN D7  // Shift register latch pin
-
-#define BUTTON_FIRE D1
-#define BUTTON_RESET D2
 
 #define SSID "Kom o lek"
 #define PASSWORD "hejhejhej3"
@@ -54,14 +54,15 @@ uint32_t start_time = 0;
 sky::address_t address_set[16];
 int32_t neighbour_list[16][4];
 size_t index_address_set = 0;
-
-sky::topo topo;
+sky::topo topo{};
 
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
 
 static ray::control_register control;
 static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
+static ray::config_status config_status(CONFIG_PIN, control);
+
 static Adafruit_NeoPixel pixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 
 WiFiClient client;
@@ -333,9 +334,7 @@ void setup() {
     pinMode(SR_LATCH_PIN, OUTPUT);
     control.set_register(update_shift_register);
 
-    // Buttons
-    pinMode(BUTTON_FIRE, INPUT_PULLUP);
-    pinMode(BUTTON_RESET, INPUT);
+    pinMode(CONFIG_PIN, INPUT);
 
     // Setup addressable LEDs
     pixel.begin();

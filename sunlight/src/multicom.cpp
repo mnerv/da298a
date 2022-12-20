@@ -15,7 +15,7 @@ multicom::multicom(int8_t rx_pin, int8_t tx_pin, uint32_t baud, control_register
 }
 auto multicom::poll() -> void {
     if (m_current == state::receive) {
-        m_control.set_com_channel(m_channel, COM_RX_MODE);
+        m_control.set_com_channel(m_channel, 0);
         m_serial.begin(m_baud);
         m_serial.listen();
         m_current = state::wait;
@@ -42,7 +42,7 @@ auto multicom::poll() -> void {
             auto const& pack = m_out[m_channel].deq();
             m_serial.flush();
             m_serial.stopListening();
-            m_control.set_com_channel(m_channel, COM_TX_MODE);
+            m_control.set_com_channel(m_channel, 1);
             m_serial.write(pack.data, pack.size);
             m_serial.flush();
         }
