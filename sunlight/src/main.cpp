@@ -58,6 +58,9 @@ sky::topo_shortest_t shortestpath{};
 
 ray::timer<uint32_t> main_timer(125);
 ray::timer<uint32_t> pixel_timer(16);
+ray::timer<uint32_t> print_timer(66);
+
+ray::timer<uint32_t> config_timer(3'000);
 
 static ray::control_register control;
 static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
@@ -101,6 +104,7 @@ void setup() {
     pixel.setBrightness(16);
     pixel.show();
     delay(random(500));
+    config_timer.reset();
 }
 
 void loop() {
@@ -108,6 +112,8 @@ void loop() {
     auto current = millis();
     main_timer.update(current);
     pixel_timer.update(current);
+    config_timer.update(current);
+    print_timer.update(current);
 
     if (main_timer.expired()) {
         main_timer.reset();
@@ -125,28 +131,49 @@ void loop() {
         com.write(packet);
     }
 
-    auto print_msg = [&current](ray::packet const& packet) {
-        if (packet.size == 0) return;
-        static uint32_t mesage_time = 0;
-        // Serial.printf("time: %.3fs, delta: %.3fs - ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-        // time (s), delta (s), message (hex), size (byte)
-        Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-        mesage_time = current;
-        for (std::size_t i = 0; i < packet.size; ++i) {
-            Serial.printf("%02x", packet.data[i]);
+    // auto print_msg = [&current](ray::packet const& packet) {
+    //     if (packet.size == 0) return;
+    //     static uint32_t mesage_time = 0;
+    //     // Serial.printf("time: %.3fs, delta: %.3fs - ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
+    //     // time (s), delta (s), message (hex), size (byte)
+    //     Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
+    //     mesage_time = current;
+    //     for (std::size_t i = 0; i < packet.size; ++i) {
+    //         Serial.printf("%02x", packet.data[i]);
+    //     }
+    //     Serial.printf(", %d\n", packet.size);
+    // };
+
+    [[maybe_unused]]auto ch0 = com.read(0);
+    [[maybe_unused]]auto ch1 = com.read(1);
+    [[maybe_unused]]auto ch2 = com.read(2);
+    [[maybe_unused]]auto ch3 = com.read(3);
+
+    switch (current_state) {
+    case node_state::config: {
+        if (config_timer.expired()) {
+            config_timer.reset();
+            current_state = node_state::idle;
         }
-        Serial.printf(", %d\n", packet.size);
-    };
-
-    auto ch0 = com.read(0);
-    auto ch1 = com.read(1);
-    auto ch2 = com.read(2);
-    auto ch3 = com.read(3);
-
-    print_msg(ch0);
-    print_msg(ch1);
-    print_msg(ch2);
-    print_msg(ch3);
+        for (size_t i = 0; i < LED_COUNT; ++i) {
+            pixel.setPixelColor(i, 0xFFFF00);
+        }
+    } break;
+    case node_state::idle: {
+        for (size_t i = 0; i < LED_COUNT; ++i) {
+            pixel.setPixelColor(i, 0x00FF00);
+        }
+        if (!config_status.is_fire())
+            current_state = node_state::fire;
+    } break;
+    case node_state::fire: {
+        for (size_t i = 0; i < LED_COUNT; ++i) {
+            pixel.setPixelColor(i, 0xFF0000);
+        }
+        if (!config_status.is_reset())
+            current_state = node_state::idle;
+    } break;
+    }
 
     if (pixel_timer.expired()) {
         pixel_timer.reset();

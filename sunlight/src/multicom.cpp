@@ -20,19 +20,15 @@ auto multicom::begin() -> void {
 }
 auto multicom::poll() -> void {
     m_state_timer.update(millis());
-    m_control.set_com_channel(m_channel, 0);
+    m_control.set_com_channel(m_channel);
 
-    switch (m_current) {
-    case state::wait: {
-        if (m_serial.available())
-            m_next = state::receive;
-        break;
-    }
-    case state::receive: {
-        m_next = state::wait;
-        while (m_serial.available()){
-            char c = m_serial.read();
-            if (c == 'R') m_next = state::wait_for_listen;
+
+    if (m_state_timer.expired()) {
+        m_state_timer.reset();
+        m_serial.println("Hello world!");
+
+        while (m_serial.available()) {
+            Serial.print((char)m_serial.read());
         }
         break;
     }

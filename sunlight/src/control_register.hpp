@@ -24,9 +24,8 @@ public:
      * @brief Set the com channel for shift register.
      * 
      * @param ch 0-3.
-     * @param mode TX or RX mode. 1 for TX, 0 for RX.
      */
-    auto set_com_channel(uint8_t ch, uint8_t mode) -> void;
+    auto set_com_channel(uint8_t ch) -> void;
 
     /**
      * @brief Set the config channel for shift register.

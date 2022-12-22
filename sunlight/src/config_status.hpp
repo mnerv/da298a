@@ -22,6 +22,9 @@ private:
     auto read_pin() const -> bool;
 
 private:
+    auto read_pin() const -> bool;
+
+private:
     uint8_t m_pin;
     control_register& m_control;
 };
