@@ -13,47 +13,44 @@ namespace ray {
 multicom::multicom(int8_t rx_pin, int8_t tx_pin, uint32_t baud, control_register& control)
     : m_serial(rx_pin, tx_pin), m_baud(baud), m_control(control), m_in(), m_out() {
 }
+
+auto multicom::begin() -> void {
+    m_serial.begin(m_baud);
+    m_serial.listen();
+}
 auto multicom::poll() -> void {
-    if (m_current == state::receive) {
-        m_control.set_com_channel(m_channel, 0);
-        m_serial.begin(m_baud);
-        m_serial.listen();
-        m_current = state::wait;
+    m_state_timer.update(millis());
+    m_control.set_com_channel(m_channel, 0);
+
+    switch (m_current) {
+    case state::wait: {
+        if (m_serial.available())
+            m_next = state::receive;
+        break;
+    }
+    case state::receive: {
+        m_next = state::wait;
+        while (m_serial.available()){
+            char c = m_serial.read();
+            if (c == 'R') m_next = state::wait_for_listen;
+        }
+        break;
+    }
+    case state::send: {
+        m_control.set_com_channel(m_channel, 1);
+
+        [[maybe_unused]]auto pkt = m_out[m_channel].deq();
+        uint8_t buffer[] = "NERV";
+        m_serial.write(buffer, sky::length_of(buffer));
+        m_serial.flush();
+
+        m_next = state::wait;
+        break;
+    }
+    default: break;
     }
 
-    if (m_current == state::wait) {
-        if (m_current != m_previous) {
-            m_start    = millis();
-            m_interval = random(16, 66);
-        } else if (millis() - m_start > m_interval) {
-            m_current = state::done;
-        }
-    } 
-
-    if (m_current == state::done) {
-        if (m_serial.available()) {
-            packet pkt{};
-            pkt.channel = m_channel;
-            pkt.size    = static_cast<uint8_t>(m_serial.available());
-            m_serial.read(pkt.data, pkt.size);
-            m_in[m_channel].enq(pkt);
-        } else if (!m_out[m_channel].empty()) {
-            // No data received, try to transmit data in current channel
-            auto const& pack = m_out[m_channel].deq();
-            m_serial.flush();
-            m_serial.stopListening();
-            m_control.set_com_channel(m_channel, 1);
-            m_serial.write(pack.data, pack.size);
-            m_serial.flush();
-        }
-
-        // Switch to next channel and wait for data
-        m_current = state::receive;
-        m_channel = (m_channel + 1) % MAX_CHANNEL;
-        m_serial.end();
-    }
-
-    m_previous = m_current;
+    m_current = m_next;
 }
 
 auto multicom::write(packet pkt) -> void {

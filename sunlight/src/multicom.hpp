@@ -18,6 +18,32 @@ namespace ray {
 constexpr std::size_t MAX_QUEUE   = 16;
 constexpr std::size_t MAX_CHANNEL = 4;
 
+template <typename T>
+class timer {
+public:
+    timer(T interval) : m_interval(interval), m_current(0), m_start(0) {}
+
+    auto interval() const -> T { return m_interval; }
+    auto set_interval(T interval) -> void {
+        m_interval = interval;
+    }
+
+    auto update(T time) -> void {
+        m_current = time;
+    }
+    auto reset() -> void {
+        m_start = m_current;
+    }
+    auto expired() const -> bool {
+        return m_current - m_start >= m_interval;
+    }
+
+private:
+    T m_interval;
+    T m_current;
+    T m_start;
+};
+
 struct packet {
     uint8_t channel = 0;
     uint8_t size    = 0;
@@ -28,7 +54,11 @@ class multicom {
 public:
     multicom(int8_t rx_pin, int8_t tx_pin, uint32_t baud, control_register& control);
 
+    auto begin() -> void;
     auto poll() -> void;
+    auto channel() const -> uint8_t { return m_channel; }
+    auto is_wait() const -> bool { return m_current == state::wait; }
+    auto is_receive() const -> bool { return m_current == state::receive; }
 
     auto write(packet pkt) noexcept -> void;
     auto read(uint8_t channel) noexcept -> packet;
@@ -41,16 +71,19 @@ private:
     sky::queue<packet, MAX_QUEUE> m_out[MAX_CHANNEL];
 
     enum class state {
-        receive,
         wait,
-        done,
+        receive,
+        send,
+        wait_for_listen,
     };
-    state m_current{state::receive};
-    state m_previous{state::receive};
+    state m_current{state::wait};
+    state m_next{state::wait};
 
     uint8_t  m_channel  = 0;
     uint32_t m_start    = 0;
     uint32_t m_interval = 0;
+    uint32_t m_current_time = 0;
+    timer<uint32_t> m_state_timer{128};
 };
 } // namespace ray
 
