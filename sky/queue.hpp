@@ -41,6 +41,10 @@ public:
         return m_buffer[(m_head + i) % SIZE];
     }
 
+    [[nodiscard]] auto peek_back(size_t i) const -> T {
+        return m_buffer[(m_tail + i) % SIZE];
+    }
+
     [[nodiscard]] auto size() const noexcept -> size_t {
         return m_size;
     }

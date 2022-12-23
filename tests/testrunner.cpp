@@ -13,6 +13,7 @@
 #include "sky.hpp"
 
 #include "mcp_tests.hpp"
+#include "queue_tests.hpp"
 #include "topo_tests.hpp"
 #include "utility_tests.hpp"
 
