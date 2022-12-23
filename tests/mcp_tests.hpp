@@ -16,7 +16,7 @@
 TEST(sky_mcp, make_buffer_from_mcp) {
     // TODO: Test make_mcp_buffer to output correct value
 
-    sky::mcp_buffer resultBuffer{ 1, 0x00, 0x04, 0x00, 0x01, 0x00, 0x02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20 };
+    sky::mcp_buffer_t resultBuffer{ 1, 0x00, 0x04, 0x00, 0x01, 0x00, 0x02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20 };
     sky::mcp src;
     
     src.type = 1;
@@ -36,7 +36,7 @@ TEST(sky_mcp, make_buffer_from_mcp) {
     
     src.crc = 20;
 
-    sky::mcp_buffer dest = {};
+    sky::mcp_buffer_t dest = {};
 
     sky::mcp_make_buffer(dest, src);
 
