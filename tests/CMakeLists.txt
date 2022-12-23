@@ -26,6 +26,7 @@ set(TARGET_NAME testrunner)
 set(TARGET_SOURCE_FILES
     "mcp_tests.hpp"
     "topo_tests.hpp"
+    "utility_tests.hpp"
 
     "testrunner.cpp"
 )
