@@ -7,11 +7,17 @@
  * @copyright Copyright (c) 2022
  */
 #include "mcp.hpp"
+#include "utility.hpp"
 #include <cstring>
 
 namespace sky {
 auto mcp_make_buffer(mcp_buffer_t& dest, mcp const& src) -> void {
-    std::memcpy(dest, &src, mcp_buffer_size);
+    mcp_buffer_t buffer{};
+    // Copy to temporay buffer for later computing CRC-8
+    std::memcpy(buffer, &src, mcp_buffer_size);
+    buffer[mcp_buffer_size - 1] = crc_8(buffer, mcp_buffer_size - 1);
+    // Copy to destination buffer
+    std::memcpy(dest, buffer, mcp_buffer_size);
 }
 
 auto mcp_make_from_buffer(mcp_buffer_t const& src) -> mcp {
@@ -42,11 +48,10 @@ auto mcp_u32_to_address(address_t& dest, std::uint32_t const& addr) -> void {
     dest[2] = static_cast<std::uint8_t>((addr & 0x00FF0000) >> 16);
 }
 
-auto mcp_calculate_crc([[maybe_unused]]mcp const& src) -> std::uint8_t {
-    return 0;
-}
-
-auto mcp_check_crc([[maybe_unused]]mcp_buffer_t const& buffer) -> bool {
-    return false;
+auto mcp_check_crc(mcp_buffer_t const& buffer) -> bool {
+    auto const& packet = mcp_make_from_buffer(buffer);
+    auto const& size = mcp_buffer_size - 1;  // skips the crc end
+    auto const& crc = crc_8(buffer, size);
+    return packet.crc == crc;
 }
 }

@@ -34,7 +34,6 @@ auto mcp_make_buffer(mcp_buffer_t& dest, mcp const& src) -> void;
 auto mcp_make_from_buffer(mcp_buffer_t const& src) -> mcp;
 auto mcp_address_to_u32(address_t const& addr) -> std::uint32_t;
 auto mcp_u32_to_address(address_t& dest, std::uint32_t const& addr) -> void;
-auto mcp_calculate_crc(mcp const& src) -> std::uint8_t;
 auto mcp_check_crc(mcp_buffer_t const& buffer) -> bool;
 }
 

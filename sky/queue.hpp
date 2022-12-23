@@ -7,6 +7,7 @@
  */
 #ifndef SKY_QUEUE_HPP
 #define SKY_QUEUE_HPP
+#include <utility>
 
 namespace sky {
 template <typename T, size_t SIZE>
@@ -17,8 +18,8 @@ public:
     queue& operator=(queue const&) = delete;
     queue(queue&&) = delete;
 
-    auto enq(T const& data) -> void {
-        m_buffer[m_tail] = data;
+    auto enq(T data) -> void {
+        m_buffer[m_tail] = std::move(data);
         inc(m_tail, SIZE);
         if (m_size == SIZE) inc(m_head, SIZE);
         else ++m_size;
