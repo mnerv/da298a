@@ -1,13 +1,13 @@
 /**
- * @file   multicom.hpp
+ * @file   porter.hpp
  * @author Pratchaya Khansomboon (me@mononerv.dev)
  * @brief  Serial comunication over multiplexer.
  * @date   2022-12-07
  * 
  * @copyright Copyright (c) 2022
  */
-#ifndef SUNLIGHT_MULTICOM_HPP
-#define SUNLIGHT_MULTICOM_HPP
+#ifndef SUNLIGHT_PORTER_HPP
+#define SUNLIGHT_PORTER_HPP
 
 #include "SoftwareSerial.h"
 
@@ -50,9 +50,9 @@ struct packet {
     uint8_t data[32]{};
 };
 
-class multicom {
+class porter {
 public:
-    multicom(int8_t rx_pin, int8_t tx_pin, uint32_t baud, control_register& control);
+    porter(int8_t rx_pin, int8_t tx_pin, uint32_t baud, control_register& control);
 
     auto begin() -> void;
     auto poll() -> void;
@@ -87,4 +87,4 @@ private:
 };
 } // namespace ray
 
-#endif  // !SUNLIGHT_MULTICOM_HPP
+#endif  // !SUNLIGHT_PORTER_HPP

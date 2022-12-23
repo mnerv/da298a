@@ -19,7 +19,7 @@
 
 #include "sky.hpp"
 #include "control_register.hpp"
-#include "multicom.hpp"
+#include "porter.hpp"
 #include "config_status.hpp"
 
 #define HARDWARE_BAUD 115200
@@ -63,7 +63,7 @@ ray::timer<uint32_t> print_timer(66);
 ray::timer<uint32_t> config_timer(3'000);
 
 static ray::control_register control;
-static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
+static ray::porter porter(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
 static ray::config_status config_status(CONFIG_PIN, control);
 
 static Adafruit_NeoPixel pixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
@@ -94,7 +94,10 @@ void setup() {
     pinMode(SR_DATA_PIN, OUTPUT);
     pinMode(SR_LATCH_PIN, OUTPUT);
     control.set_register(update_shift_register);
-    com.begin();
+
+    pinMode(RX_PIN, INPUT);
+    pinMode(TX_PIN, OUTPUT);
+    porter.begin();
 
     pinMode(CONFIG_PIN, INPUT);
 
@@ -108,7 +111,7 @@ void setup() {
 }
 
 void loop() {
-    com.poll();
+    porter.poll();
     auto current = millis();
     main_timer.update(current);
     pixel_timer.update(current);
@@ -122,32 +125,33 @@ void loop() {
         packet.size = std::snprintf(reinterpret_cast<char*>(packet.data), sky::length_of(packet.data), "NERV");
 
         packet.channel = 0;
-        com.write(packet);
-        packet.channel = 1;
-        com.write(packet);
-        packet.channel = 2;
-        com.write(packet);
-        packet.channel = 3;
-        com.write(packet);
+        porter.write(packet);
+        // packet.channel = 1;
+        // porter.write(packet);
+        // packet.channel = 2;
+        // porter.write(packet);
+        // packet.channel = 3;
+        // porter.write(packet);
     }
 
-    // auto print_msg = [&current](ray::packet const& packet) {
-    //     if (packet.size == 0) return;
-    //     static uint32_t mesage_time = 0;
-    //     // Serial.printf("time: %.3fs, delta: %.3fs - ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-    //     // time (s), delta (s), message (hex), size (byte)
-    //     Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-    //     mesage_time = current;
-    //     for (std::size_t i = 0; i < packet.size; ++i) {
-    //         Serial.printf("%02x", packet.data[i]);
-    //     }
-    //     Serial.printf(", %d\n", packet.size);
-    // };
+    auto print_msg = [&current](ray::packet const& packet) {
+        if (packet.size == 0) return;
+        static uint32_t mesage_time = 0;
+        // Serial.printf("time: %.3fs, delta: %.3fs - ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
+        // time (s), delta (s), message (hex), size (byte)
+        Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
+        mesage_time = current;
+        for (std::size_t i = 0; i < packet.size; ++i) {
+            Serial.printf("%c", packet.data[i]);
+        }
+        Serial.printf(", %d\n", packet.size);
+    };
 
-    [[maybe_unused]]auto ch0 = com.read(0);
-    [[maybe_unused]]auto ch1 = com.read(1);
-    [[maybe_unused]]auto ch2 = com.read(2);
-    [[maybe_unused]]auto ch3 = com.read(3);
+    auto ch0 = porter.read(0);
+    // auto ch1 = porter.read(1);
+    // auto ch2 = porter.read(2);
+    // auto ch3 = porter.read(3);
+    print_msg(ch0);
 
     switch (current_state) {
     case node_state::config: {

@@ -18,8 +18,6 @@ public:
     auto is_reset() const -> bool;
     auto is_fire() const -> bool;
     auto is_exit() const -> bool;
-private:
-    auto read_pin() const -> bool;
 
 private:
     auto read_pin() const -> bool;
