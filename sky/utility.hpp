@@ -10,6 +10,7 @@
 #ifndef SKY_UTILITY_HPP
 #define SKY_UTILITY_HPP
 
+#include <cstdint>
 #include <cstddef>
 #include <type_traits>
 
@@ -41,8 +42,10 @@ inline constexpr auto crc_8(std::uint8_t const* buffer, std::size_t size) -> std
     for (std::size_t i = 0; i < size; ++i) {
         reg = reg ^ buffer[i];
         for (std::uint8_t j = 0; j < 8; ++j) {
-            if (reg & 0x80) reg = (reg << 1) ^ poly;
-            else reg = (reg << 1);
+            if (reg & 0x80)
+                reg = std::uint8_t(reg << 1) ^ poly;
+            else
+                reg = std::uint8_t(reg << 1);
         }
     }
     return reg;
