@@ -19,15 +19,10 @@ auto porter::begin() -> void {
     m_serial.listen();
 }
 auto porter::poll() -> void {
-    m_state_timer.update(millis());
     m_control.set_com_channel(m_channel);
 
-    if (m_serial.available() && m_state_timer.expired()) {
-        m_state_timer.reset();
-
-        while (m_serial.available()) {
-            m_in_bytes[m_channel].enq(uint8_t(m_serial.read()));
-        }
+    if (m_serial.available()) {
+        m_in_bytes[m_channel].enq(uint8_t(m_serial.read()));
 
         auto const check_preamble = [](uint8_t const& byte) {
             return byte == PREAMBLE_PATTERN;

@@ -47,7 +47,6 @@ int32_t max_config_tries = 255;
 
 sky::address_t edges[ray::MAX_CHANNEL] {};
 bool verified_edges[ray::MAX_CHANNEL] {false, false, false, false};
-uint32_t start_time = 0;
 
 //16 = number of nodes
 sky::address_t address_set[16];
@@ -56,32 +55,47 @@ size_t index_address_set = 0;
 sky::topo topo{};
 sky::topo_shortest_t shortestpath{};
 
-ray::timer<uint32_t> main_timer(125);
-ray::timer<uint32_t> pixel_timer(33);
-ray::timer<uint32_t> config_timer(3'000);
+uint32_t pixel_time = 0;
+uint32_t pixel_interval = 33;
+uint32_t config_time = 0;
 
 static ray::control_register control;
 static ray::porter porter(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
 static ray::config_status config_status(CONFIG_PIN, control);
 
 static Adafruit_NeoPixel pixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
+uint32_t pixel_color[LED_COUNT] {0, 0, 0, 0};
+
+auto print_mcp(sky::mcp const& mcp) -> void {
+    sky::address_t id{};
+    sky::mcp_u32_to_address(id, ESP.getChipId());
+    Serial.printf("%02x:%02x:%02x: ", id[0], id[1], id[2]);
+    Serial.print("mcp{");
+    Serial.printf("type: %02x, ", mcp.type);
+    Serial.printf("src: %02x:%02x:%02x, ", mcp.source[0], mcp.source[1], mcp.source[2]);
+    Serial.printf("dst: %02x:%02x:%02x, ", mcp.destination[0], mcp.destination[1], mcp.destination[2]);
+    Serial.print("data: [");
+    for (size_t i = 0; i < sky::payload_size; ++i) {
+        Serial.printf("%02x", mcp.payload[i]);
+        if (i < sky::payload_size - 1) Serial.print(", ");
+    }
+    Serial.print("], ");
+    Serial.printf("crc: %02x", mcp.crc);
+    Serial.println("}");
+}
+
+auto print_packet(ray::packet const& pkt) -> void {
+    if (pkt.size != ray::PACKET_DATA_SIZE) return;
+    sky::mcp_buffer_t buffer{};
+    memcpy(buffer, pkt.data, sky::mcp_buffer_size);
+    auto mcp = sky::mcp_make_from_buffer(buffer);
+    print_mcp(mcp);
+}
 
 auto update_shift_register(uint8_t data) -> void {
     digitalWrite(SR_LATCH_PIN, LOW);
     shiftOut(SR_DATA_PIN, SR_CLK_PIN, MSBFIRST, data);
     digitalWrite(SR_LATCH_PIN, HIGH);
-}
-
-auto printPath(sky::topo_shortest_t const& path){
-    Serial.print("\nShortest Path: ");
-    for (size_t i = 0; i < 16; i++)
-    {
-        if (path[i] != 0)
-        {
-            Serial.printf("%d ", path[i]);
-        }    
-    }
-    Serial.println();
 }
 
 void setup() {
@@ -104,82 +118,86 @@ void setup() {
     pixel.clear();
     pixel.setBrightness(16);
     pixel.show();
-    config_timer.reset();
+    delay(1000);
 }
 
 void loop() {
     porter.poll();
     auto current = millis();
-    main_timer.update(current);
-    pixel_timer.update(current);
-    // config_timer.update(current);
+    //delay(1);
 
-    if (main_timer.expired()) {
-        main_timer.reset();
+    switch (current_state) {
+    case node_state::config: {
+        if (current - config_time > 128) {
+            config_time = current;
+            --max_config_tries;
 
-        ray::packet packet{};
-        for (size_t i = 0; i < 15; i++)
-        {
-            packet.data[i] = (uint8_t) i;
+            sky::mcp_buffer_t buffer{};
+            sky::mcp mcp{ 0, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+            sky::mcp_make_buffer(buffer, mcp);
+            ray::packet packet{};
+            memcpy(packet.data, buffer, sky::mcp_buffer_size);
+            packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+
+            if (!verified_edges[0]) {
+                packet.channel = 0;
+                porter.write(packet);
+            }
+            if (!verified_edges[1]) {
+                packet.channel = 1;
+                porter.write(packet);
+            }
+            if (!verified_edges[2]) {
+                packet.channel = 2;
+                porter.write(packet);
+            }
+            if (!verified_edges[3]) {
+                packet.channel = 3;
+                porter.write(packet);
+            }
         }
-        packet.size = 15;
-        packet.channel = 0;
-        porter.write(packet);
-        // packet.channel = 1;
-        // porter.write(packet);
-        // packet.channel = 2;
-        // porter.write(packet);
-        // packet.channel = 3;
-        // porter.write(packet);
-    }
 
-    auto print_msg = [&current](ray::packet const& packet) {
-        if (packet.size == 0) return;
-        static uint32_t mesage_time = 0;
-        // Serial.printf("time: %.3fs, delta: %.3fs - ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-        // time (s), delta (s), message (hex), size (byte)
-        Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
-        mesage_time = current;
-        for (std::size_t i = 0; i < packet.size; ++i) {
-            Serial.printf("%02x ", packet.data[i]);
+        auto ch0 = porter.read(0);
+        auto ch1 = porter.read(1);
+        auto ch2 = porter.read(2);
+        auto ch3 = porter.read(3);
+
+        // handle_message(ch0);
+        // handle_message(ch1);
+        // handle_message(ch2);
+        // handle_message(ch3);
+
+        print_packet(ch0);
+        print_packet(ch1);
+        print_packet(ch2);
+        print_packet(ch3);
+
+        if (max_config_tries <= 0) {
+            current_state = node_state::idle;
         }
-        Serial.printf(", %d\n", packet.size);
-    };
 
-    auto ch0 = porter.read(0);
-    print_msg(ch0);
-
-    // switch (current_state) {
-    // case node_state::config: {
-    //     if (config_timer.expired()) {
-    //         config_timer.reset();
-    //         current_state = node_state::idle;
-    //     }
-    //     for (size_t i = 0; i < LED_COUNT; ++i) {
-    //         pixel.setPixelColor(i, 0xFFFF00);
-    //     }
-    // } break;
-    // case node_state::idle: {
-    //     for (size_t i = 0; i < LED_COUNT; ++i) {
-    //         pixel.setPixelColor(i, 0x00FF00);
-    //     }
-    //     if (config_status.is_fire())
-    //         current_state = node_state::fire;
-    // } break;
-    // case node_state::fire: {
-    //     for (size_t i = 0; i < LED_COUNT; ++i) {
-    //         pixel.setPixelColor(i, 0xFF0000);
-    //     }
-    //     if (config_status.is_reset())
-    //         current_state = node_state::idle;
-    // } break;
-    // }
-    for (uint16_t i = 0; i < LED_COUNT; ++i) {
-        pixel.setPixelColor(i, 0xFF00FF);
+        pixel.setPixelColor(0, 0xFF00FF);
+        pixel.setPixelColor(1, 0xFF00FF);
+        pixel.setPixelColor(2, 0xFF00FF);
+        pixel.setPixelColor(3, 0xFF00FF);
+    } break;
+    case node_state::idle: {
+        pixel.setPixelColor(0, 0x00FF00);
+        pixel.setPixelColor(1, 0x00FF00);
+        pixel.setPixelColor(2, 0x00FF00);
+        pixel.setPixelColor(3, 0x00FF00);
+    } break;
+    case node_state::fire: {
+        pixel.setPixelColor(0, 0xFF0000);
+        pixel.setPixelColor(1, 0xFF0000);
+        pixel.setPixelColor(2, 0xFF0000);
+        pixel.setPixelColor(3, 0xFF0000);
+    } break;
     }
-
-    if (pixel_timer.expired()) {
-        pixel_timer.reset();
+ 
+    if (current - pixel_time > pixel_interval) {
+        pixel_time = current;
         pixel.show();
     }
 }

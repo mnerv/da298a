@@ -18,32 +18,6 @@ namespace ray {
 constexpr std::size_t MAX_QUEUE   = 16;
 constexpr std::size_t MAX_CHANNEL = 4;
 
-template <typename T>
-class timer {
-public:
-    timer(T interval) : m_interval(interval), m_current(0), m_start(0) {}
-
-    auto interval() const -> T { return m_interval; }
-    auto set_interval(T interval) -> void {
-        m_interval = interval;
-    }
-
-    auto update(T time) -> void {
-        m_current = time;
-    }
-    auto reset() -> void {
-        m_start = m_current;
-    }
-    auto expired() const -> bool {
-        return m_current - m_start >= m_interval;
-    }
-
-private:
-    T m_interval;
-    T m_current;
-    T m_start;
-};
-
 constexpr size_t PREAMBLE_SIZE = 2;
 constexpr uint8_t PREAMBLE_PATTERN = 0b1010'1010;
 constexpr uint8_t SFD_PATTERN      = 0b1010'1010;
@@ -95,7 +69,6 @@ private:
     uint32_t m_start    = 0;
     uint32_t m_interval = 0;
     uint32_t m_current_time = 0;
-    timer<uint32_t> m_state_timer{16};
 };
 } // namespace ray
 
