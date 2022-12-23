@@ -15,7 +15,6 @@
 #include "Arduino.h"
 #include "Adafruit_NeoPixel.h"
 #include "SoftwareSerial.h"
-// #include "ESP8266WiFi.h"
 
 #include "sky.hpp"
 #include "control_register.hpp"
@@ -92,6 +91,101 @@ auto print_packet(ray::packet const& pkt) -> void {
     print_mcp(mcp);
 }
 
+
+auto handle_message(ray::packet const& packet) -> void {
+    if (packet.size != sky::mcp_buffer_size) return;
+    sky::mcp_buffer_t buffer{};
+    memcpy(buffer, packet.data, sky::mcp_buffer_size);
+    auto mcp = sky::mcp_make_from_buffer(buffer);
+    auto channel = packet.channel;
+
+    if (mcp.type == 0) {
+        if (mcp.payload[0] == 1) {
+            memcpy(edges[channel], mcp.source, sky::address_size);
+            verified_edges[channel] = true;
+        } else {
+            memcpy(mcp.destination, mcp.source, sky::address_size);
+            sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
+            mcp.payload[0] = 1;
+            sky::mcp_make_buffer(buffer, mcp);
+
+            ray::packet pkt{};
+            memcpy(pkt.data, buffer, sky::mcp_buffer_size);
+            pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+            pkt.channel = channel;
+            for (auto i = 0; i < 16; ++i)  // Flood the buffer
+                porter.write(pkt);
+        } 
+    }else if (mcp.type == 1) {
+        // updateEdges(mcp);
+        // printAddrSetAndNeighbour();
+        // createTopo();
+        // sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
+        // printPath(shortestpath);
+        
+        for (size_t i = 0; i < 4; i++)
+        {
+            if (packet.channel != i && verified_edges[i] == true)
+            {
+                mcp.destination[0] = edges[i][0];
+                mcp.destination[1] = edges[i][1];
+                mcp.destination[2] = edges[i][2];
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet pkt{};
+                Serial.printf("Sent on CH: %02x ", i);
+                print_mcp(mcp);
+                Serial.println();
+                sky::mcp_make_buffer(buffer, mcp);
+                memcpy(pkt.data, buffer, sky::mcp_buffer_size);
+                pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                pkt.channel = i;
+                for (auto i = 0; i < 8; ++i) porter.write(pkt);
+            }
+        }  
+    }else if (mcp.type == 3)
+    {
+        current_state = node_state::fire;
+
+        sky::mcp_buffer_t buffer{};
+        sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+        sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+        sky::mcp_make_buffer(buffer, mcp);
+        ray::packet packet{};
+        memcpy(packet.data, buffer, sky::mcp_buffer_size);
+        packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            if(channel != i)
+            {
+                packet.channel = i;
+                for (auto j = 0; j < 16; ++j) { // Flood the buffer
+                    porter.write(packet);
+                }
+            }
+        }
+    }else if (mcp.type == 4) {
+        current_state = node_state::idle;
+
+        sky::mcp_buffer_t buffer{};
+        sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+        sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+        sky::mcp_make_buffer(buffer, mcp);
+        ray::packet packet{};
+        memcpy(packet.data, buffer, sky::mcp_buffer_size);
+        packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            if(channel != i)
+            {
+                packet.channel = i;
+                for (auto j = 0; j < 16; ++j) { // Flood the buffer
+                    porter.write(packet);
+                }
+            }
+        }      
+    }
+};
+
 auto update_shift_register(uint8_t data) -> void {
     digitalWrite(SR_LATCH_PIN, LOW);
     shiftOut(SR_DATA_PIN, SR_CLK_PIN, MSBFIRST, data);
@@ -163,10 +257,10 @@ void loop() {
         auto ch2 = porter.read(2);
         auto ch3 = porter.read(3);
 
-        // handle_message(ch0);
-        // handle_message(ch1);
-        // handle_message(ch2);
-        // handle_message(ch3);
+        handle_message(ch0);
+        handle_message(ch1);
+        handle_message(ch2);
+        handle_message(ch3);
 
         print_packet(ch0);
         print_packet(ch1);

@@ -41,8 +41,6 @@ public:
     auto begin() -> void;
     auto poll() -> void;
     auto channel() const -> uint8_t { return m_channel; }
-    auto is_wait() const -> bool { return m_current == state::wait; }
-    auto is_receive() const -> bool { return m_current == state::receive; }
 
     auto write(packet pkt) noexcept -> void;
     auto read(uint8_t channel) noexcept -> packet;
@@ -55,15 +53,6 @@ private:
     sky::queue<packet, MAX_QUEUE> m_out[MAX_CHANNEL];
 
     sky::queue<uint8_t, 256> m_in_bytes[MAX_CHANNEL];
-
-    enum class state {
-        wait,
-        receive,
-        send,
-        wait_for_listen,
-    };
-    state m_current{state::wait};
-    state m_next{state::wait};
 
     uint8_t  m_channel  = 0;
     uint32_t m_start    = 0;

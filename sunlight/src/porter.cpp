@@ -19,6 +19,8 @@ auto porter::begin() -> void {
     m_serial.listen();
 }
 auto porter::poll() -> void {
+    m_current_time = millis();
+    m_channel = 0;
     m_control.set_com_channel(m_channel);
 
     if (m_serial.available()) {
@@ -52,8 +54,7 @@ auto porter::poll() -> void {
             if (is_sfd_ok && m_in_bytes[m_channel].size() >= PACKET_SIZE) {
                 uint8_t buffer[PACKET_SIZE] = {0};
                 auto size = m_in_bytes[m_channel].size();
-                for (size_t i = 0; i < size; i++)
-                {
+                for (size_t i = 0; i < size; i++) {
                     buffer[i] = m_in_bytes[m_channel].deq();
                 }
 
@@ -64,6 +65,12 @@ auto porter::poll() -> void {
                 m_in[m_channel].enq(pkt);
             }
         }
+
+        // if (m_current_time - m_start > m_interval) {
+        //     m_start = m_current_time;
+        //     m_channel = (m_channel + 1) % MAX_CHANNEL;
+        //     m_interval = random(280, 560);
+        // }
     }
 
     if (!m_out[m_channel].empty()) {
@@ -77,11 +84,9 @@ auto porter::poll() -> void {
         memcpy(buffer + PREAMBLE_SFD_SIZE, pkt.data, pkt.size);
         m_serial.write(buffer, PACKET_SIZE);
         m_serial.flush();
+
+        m_channel = (m_channel + 1) % MAX_CHANNEL;
     }
-
-    // TODO: When to switch channel
-
-    m_current = m_next;
 }
 
 auto porter::write(packet pkt) -> void {
