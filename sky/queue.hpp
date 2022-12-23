@@ -26,7 +26,7 @@ public:
     }
 
     [[nodiscard]] auto deq() noexcept -> T {
-        if (m_head == m_tail) return m_buffer[m_head];
+        if (empty()) return m_buffer[m_head];
         auto const& value = m_buffer[m_head];
         inc(m_head, SIZE);
         --m_size;
@@ -38,7 +38,7 @@ public:
     }
 
     [[nodiscard]] auto peek(size_t i) const -> T {
-        return m_buffer[i];
+        return m_buffer[(m_head + i) % SIZE];
     }
 
     [[nodiscard]] auto size() const noexcept -> size_t {
@@ -46,6 +46,12 @@ public:
     }
     [[nodiscard]] auto capacity() const noexcept -> size_t {
         return SIZE;
+    }
+
+    auto pop_front() noexcept -> void {
+        if (empty()) return;
+        inc(m_head, SIZE);
+        --m_size;
     }
 
 private:
