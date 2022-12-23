@@ -27,7 +27,7 @@
 
 #define RX_PIN       D5
 #define TX_PIN       D6
-#define LED_PIN      D8
+#define LED_PIN      D1
 #define LED_COUNT    4
 
 #define CONFIG_PIN   A0
@@ -57,9 +57,7 @@ sky::topo topo{};
 sky::topo_shortest_t shortestpath{};
 
 ray::timer<uint32_t> main_timer(125);
-ray::timer<uint32_t> pixel_timer(16);
-ray::timer<uint32_t> print_timer(66);
-
+ray::timer<uint32_t> pixel_timer(33);
 ray::timer<uint32_t> config_timer(3'000);
 
 static ray::control_register control;
@@ -106,7 +104,6 @@ void setup() {
     pixel.clear();
     pixel.setBrightness(16);
     pixel.show();
-    delay(random(500));
     config_timer.reset();
 }
 
@@ -115,15 +112,17 @@ void loop() {
     auto current = millis();
     main_timer.update(current);
     pixel_timer.update(current);
-    config_timer.update(current);
-    print_timer.update(current);
+    // config_timer.update(current);
 
     if (main_timer.expired()) {
         main_timer.reset();
 
         ray::packet packet{};
-        packet.size = std::snprintf(reinterpret_cast<char*>(packet.data), sky::length_of(packet.data), "NERV");
-
+        for (size_t i = 0; i < 15; i++)
+        {
+            packet.data[i] = (uint8_t) i;
+        }
+        packet.size = 15;
         packet.channel = 0;
         porter.write(packet);
         // packet.channel = 1;
@@ -142,41 +141,41 @@ void loop() {
         Serial.printf("%.3f, %.3f, ", float(current) / 1000.0f, float(current - mesage_time) / 1000.0f);
         mesage_time = current;
         for (std::size_t i = 0; i < packet.size; ++i) {
-            Serial.printf("%c", packet.data[i]);
+            Serial.printf("%02x ", packet.data[i]);
         }
         Serial.printf(", %d\n", packet.size);
     };
 
     auto ch0 = porter.read(0);
-    // auto ch1 = porter.read(1);
-    // auto ch2 = porter.read(2);
-    // auto ch3 = porter.read(3);
     print_msg(ch0);
 
-    switch (current_state) {
-    case node_state::config: {
-        if (config_timer.expired()) {
-            config_timer.reset();
-            current_state = node_state::idle;
-        }
-        for (size_t i = 0; i < LED_COUNT; ++i) {
-            pixel.setPixelColor(i, 0xFFFF00);
-        }
-    } break;
-    case node_state::idle: {
-        for (size_t i = 0; i < LED_COUNT; ++i) {
-            pixel.setPixelColor(i, 0x00FF00);
-        }
-        if (!config_status.is_fire())
-            current_state = node_state::fire;
-    } break;
-    case node_state::fire: {
-        for (size_t i = 0; i < LED_COUNT; ++i) {
-            pixel.setPixelColor(i, 0xFF0000);
-        }
-        if (!config_status.is_reset())
-            current_state = node_state::idle;
-    } break;
+    // switch (current_state) {
+    // case node_state::config: {
+    //     if (config_timer.expired()) {
+    //         config_timer.reset();
+    //         current_state = node_state::idle;
+    //     }
+    //     for (size_t i = 0; i < LED_COUNT; ++i) {
+    //         pixel.setPixelColor(i, 0xFFFF00);
+    //     }
+    // } break;
+    // case node_state::idle: {
+    //     for (size_t i = 0; i < LED_COUNT; ++i) {
+    //         pixel.setPixelColor(i, 0x00FF00);
+    //     }
+    //     if (config_status.is_fire())
+    //         current_state = node_state::fire;
+    // } break;
+    // case node_state::fire: {
+    //     for (size_t i = 0; i < LED_COUNT; ++i) {
+    //         pixel.setPixelColor(i, 0xFF0000);
+    //     }
+    //     if (config_status.is_reset())
+    //         current_state = node_state::idle;
+    // } break;
+    // }
+    for (uint16_t i = 0; i < LED_COUNT; ++i) {
+        pixel.setPixelColor(i, 0xFF00FF);
     }
 
     if (pixel_timer.expired()) {

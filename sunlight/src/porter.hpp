@@ -44,10 +44,20 @@ private:
     T m_start;
 };
 
+constexpr size_t PREAMBLE_SIZE = 2;
+constexpr uint8_t PREAMBLE_PATTERN = 0b1010'1010;
+constexpr uint8_t SFD_PATTERN      = 0b1010'1010;
+constexpr size_t  PREAMBLE_SFD_SIZE = PREAMBLE_SIZE + 1;
+
+constexpr size_t PACKET_SIZE = 32;
+
+// Takes into account preamble and SFD.
+constexpr size_t PACKET_DATA_SIZE = PACKET_SIZE - PREAMBLE_SFD_SIZE;
+
 struct packet {
     uint8_t channel = 0;
     uint8_t size    = 0;
-    uint8_t data[32]{};
+    uint8_t data[PACKET_DATA_SIZE]{};
 };
 
 class porter {
@@ -70,6 +80,8 @@ private:
     sky::queue<packet, MAX_QUEUE> m_in[MAX_CHANNEL];
     sky::queue<packet, MAX_QUEUE> m_out[MAX_CHANNEL];
 
+    sky::queue<uint8_t, 256> m_in_bytes[MAX_CHANNEL];
+
     enum class state {
         wait,
         receive,
@@ -83,7 +95,7 @@ private:
     uint32_t m_start    = 0;
     uint32_t m_interval = 0;
     uint32_t m_current_time = 0;
-    timer<uint32_t> m_state_timer{128};
+    timer<uint32_t> m_state_timer{16};
 };
 } // namespace ray
 
