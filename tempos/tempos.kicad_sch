@@ -6,8 +6,8 @@
 
   (title_block
     (title "tempos single node")
-    (date "2022-12-22")
-    (rev "v1.2")
+    (date "2022-12-23")
+    (rev "v1.3")
     (company "Malmö Universitet, Fakulteten för teknik och samhälle")
     (comment 3 "Copyright: Malmö Universitet")
     (comment 4 "Author: Pratchaya Khansomboon, Isac Pettersson")
@@ -1605,8 +1605,8 @@
 
   (no_connect (at 71.12 58.42) (uuid 152c875f-6f78-4ebd-ab3d-cb6fd7b496d2))
   (no_connect (at 50.8 66.04) (uuid 1c2816de-2e7a-4003-b59a-39b8053f8651))
-  (no_connect (at 71.12 60.96) (uuid 39e2dcdc-efd2-4ff8-94e6-079b538acf87))
   (no_connect (at 71.12 63.5) (uuid 39e2dcdc-efd2-4ff8-94e6-079b538acf88))
+  (no_connect (at 71.12 78.74) (uuid 87824357-877e-4489-bb5e-72971bca9788))
   (no_connect (at 134.62 60.96) (uuid 9095265d-59b7-4877-ba1e-9dd9b4589b2a))
   (no_connect (at 50.8 68.58) (uuid 92ce9e7d-b2e9-4a7b-8e03-0ec612e593a8))
   (no_connect (at 134.62 55.88) (uuid 93760b54-0a59-4ddf-87b6-1115a5c682d8))
@@ -2065,7 +2065,7 @@
     (stroke (width 0) (type default) (color 0 0 0 0))
     (uuid c71c84a4-6b79-4d84-8d48-dbc4fa6aa826)
   )
-  (wire (pts (xy 71.12 78.74) (xy 83.82 78.74))
+  (wire (pts (xy 71.12 60.96) (xy 83.82 60.96))
     (stroke (width 0) (type default) (color 0 0 0 0))
     (uuid c7472ae5-23de-4c34-8804-57f84287bb34)
   )
@@ -2210,7 +2210,7 @@
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 678b995a-d061-435f-8b06-3ce0544b6a46)
   )
-  (label "LED_PIN" (at 83.82 78.74 180)
+  (label "LED_PIN" (at 83.82 60.96 180)
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 81778b14-99df-4eb7-97eb-3c0cd4367eb3)
   )
