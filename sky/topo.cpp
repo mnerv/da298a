@@ -47,7 +47,7 @@ auto topo_compute_dijkstra(topo const& topology, int32_t src, int32_t dest, topo
 
     //Initialize unvisited_nodes array and stored nodes array (prev_nodes)
     for (size_t i = 1; i < node_size + 1; i++) {
-        unvisited_nodes[i-1] = i;
+        unvisited_nodes[i-1] = static_cast<int32_t>(i);
         if (static_cast<int32_t>(i) != src) {
             min_distance[i-1] = 255;
         }

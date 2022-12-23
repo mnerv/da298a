@@ -66,6 +66,8 @@ public:
     client(std::uint32_t id, trench_ref_t conn) : m_id(id), m_trench(std::move(conn)) {}
 
     auto loop() -> asio::awaitable<void> {
+        throw std::runtime_error("");
+        (void)m_id;
     }
 
 private:

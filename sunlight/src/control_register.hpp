@@ -13,9 +13,6 @@
 #include <functional>
 
 namespace ray {
-constexpr uint8_t COM_RX_MODE = 0b0000'0000;  // MAX485 - Receive mode
-constexpr uint8_t COM_TX_MODE = 0b0000'0100;  // MAX485 - Transmit mode
-
 class control_register {
 public:
     using register_fn_t = std::function<void(uint8_t)>;
@@ -23,13 +20,22 @@ public:
 public:
     auto set_register(register_fn_t fn) -> void { m_register_fn = std::move(fn); }
 
+    /**
+     * @brief Set the com channel for shift register.
+     * 
+     * @param ch 0-3.
+     * @param mode TX or RX mode. 1 for TX, 0 for RX.
+     */
     auto set_com_channel(uint8_t ch, uint8_t mode) -> void;
 
+    /**
+     * @brief Set the config channel for shift register.
+     * @param ch 0-7.
+     */
+    auto set_config_channel(uint8_t ch) -> void;
+
 private:
-    uint8_t m_buffer    = 0;
-    uint8_t m_clock_pin = 0;
-    uint8_t m_data_pin  = 0;
-    uint8_t m_latch_pin = 0;
+    uint8_t m_buffer = 0;
     register_fn_t m_register_fn{};
 };
 } // namespace ray

@@ -14,6 +14,7 @@
 
 #include "mcp_tests.hpp"
 #include "topo_tests.hpp"
+#include "utility_tests.hpp"
 
 auto main(int argc, char const* argv[]) -> int {
     testing::InitGoogleTest(&argc, (char**)argv);
