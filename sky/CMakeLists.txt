@@ -26,6 +26,7 @@ set(TARGET_SOURCE_FILES
     "mcp.hpp"
     "sky.hpp"
     "topo.hpp"
+    "utility.hpp"
 
     "mcp.cpp"
     "topo.cpp"
