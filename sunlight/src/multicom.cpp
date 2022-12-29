@@ -65,4 +65,10 @@ auto multicom::read(uint8_t channel) -> packet {
     if (m_in[channel].empty()) return {};
     return m_in[channel].deq();
 }
+auto multicom::clear_buffer(uint8_t channel) noexcept -> void{
+    if (channel >= MAX_CHANNEL) return;
+    m_out[channel].clear();
+    m_in[channel].clear();
+}
+
 } // namespace ray

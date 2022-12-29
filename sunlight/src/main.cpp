@@ -45,6 +45,8 @@ int32_t max_config_tries = 255;
 
 sky::address_t edges[ray::MAX_CHANNEL] {};
 bool verified_edges[ray::MAX_CHANNEL] {false, false, false, false};
+bool neighbour_in_fire[ray::MAX_CHANNEL] {false, false, false, false};
+bool reset[ray::MAX_CHANNEL] {false, false, false, false};
 uint32_t start_time = 0;
 
 //16 = number of nodes
@@ -337,7 +339,7 @@ void setup() {
 
     // Setup addressable LEDs
     pixel.begin();
-    pixel.setBrightness(16);
+    pixel.setBrightness(50);
     pixel.show();
 
     Serial.println();
@@ -367,22 +369,32 @@ auto handle_message = [](ray::packet const& packet) {
     auto mcp = sky::mcp_make_from_buffer(buffer);
     auto channel = packet.channel;
 
+    //If type 0 edges finding
     if (mcp.type == 0) {
+        //If ack just verify the edge and save its mac
         if (mcp.payload[0] == 1) {
             memcpy(edges[channel], mcp.source, sky::address_size);
             verified_edges[channel] = true;
+            com.clear_buffer(channel);
         } else {
+            //If recived from channel not verified just save its MAC
+            if (verified_edges[channel] == false)
+            {
+                memcpy(edges[channel], mcp.source, sky::address_size);
+                verified_edges[channel] = true;
+            } 
+
+            //Replying with ACK
             memcpy(mcp.destination, mcp.source, sky::address_size);
             sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
             mcp.payload[0] = 1;
             sky::mcp_make_buffer(buffer, mcp);
-
             ray::packet pkt{};
             memcpy(pkt.data, buffer, sky::mcp_buffer_size);
             pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
             pkt.channel = channel;
             for (auto i = 0; i < 16; ++i)  // Flood the buffer
-                com.write(pkt);
+                com.write(pkt); 
         } 
     }else if (mcp.type == 1) {
         updateEdges(mcp);
@@ -409,48 +421,76 @@ auto handle_message = [](ray::packet const& packet) {
                 pkt.channel = i;
                 for (auto i = 0; i < 8; ++i) com.write(pkt);
             }
-        }  
+        } 
+        //FIRE
     }else if (mcp.type == 3)
     {
-        current_state = node_state::fire;
-
-        sky::mcp_buffer_t buffer{};
-        sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-        sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-        sky::mcp_make_buffer(buffer, mcp);
-        ray::packet packet{};
-        memcpy(packet.data, buffer, sky::mcp_buffer_size);
-        packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        if (mcp.payload[0] == 1)
         {
-            if(channel != i)
+            neighbour_in_fire[channel] = true;
+            com.clear_buffer(channel);
+        }else {
+            current_state = node_state::fire;
+            sky::mcp_buffer_t buffer{};
+            sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+            memcpy(mcp.destination, edges[channel], sky::address_size);
+            sky::mcp_make_buffer(buffer, mcp);
+            ray::packet packet{};
+            packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+            for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
             {
-                packet.channel = i;
-                for (auto j = 0; j < 16; ++j) { // Flood the buffer
-                    com.write(packet);
+                if(channel == i)
+                {
+                    mcp.payload[0] = 1;
                 }
+                
+                if (verified_edges[i] == true)
+                {
+                    packet.channel = i;
+                    memcpy(packet.data, buffer, sky::mcp_buffer_size);
+
+                    for (auto j = 0; j < 16; ++j) { // Flood the buffer
+                        com.write(packet);
+                    }
+                }   
             }
-        }
+        }  
+        //RESET 
     }else if (mcp.type == 4) {
-        current_state = node_state::idle;
-
-        sky::mcp_buffer_t buffer{};
-        sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-        sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-        sky::mcp_make_buffer(buffer, mcp);
-        ray::packet packet{};
-        memcpy(packet.data, buffer, sky::mcp_buffer_size);
-        packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        if (mcp.payload[0] == 1)
         {
-            if(channel != i)
+            neighbour_in_fire[channel] = false;
+            com.clear_buffer(channel);
+        }else{ 
+            current_state = node_state::idle;
+
+            for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
             {
-                packet.channel = i;
-                for (auto j = 0; j < 16; ++j) { // Flood the buffer
-                    com.write(packet);
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet packet{};
+            
+                packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                
+                if(channel == i)
+                {
+                    mcp.payload[0] = 1;   
                 }
-            }
-        }      
+
+                if (verified_edges[i] == true)
+                {
+                    packet.channel = i;
+                    memcpy(packet.data, buffer, sky::mcp_buffer_size);
+
+                    for (auto j = 0; j < 16; ++j) { // Flood the buffer
+                      com.write(packet);
+                    }
+                }  
+            }   
+        }   
     }
 };
 
@@ -583,25 +623,27 @@ void loop() {
         handle_message(ch2);
         handle_message(ch3);
 
-        if (config_status.is_fire())
-        {
-            //Go into idle
-            current_state = node_state::fire;
 
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            if (neighbour_in_fire[i] == true && verified_edges[i] == true)
+        {
             sky::mcp_buffer_t buffer{};
-            sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+            sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
             sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
             sky::mcp_make_buffer(buffer, mcp);
             ray::packet packet{};
             memcpy(packet.data, buffer, sky::mcp_buffer_size);
             packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-            for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
-            {
-                packet.channel = i;
-                for (auto j = 0; j < 16; ++j) { // Flood the buffer
-                        com.write(packet);
-                }
-            }
+            packet.channel = i;
+            com.write(packet);      
+        }
+        } 
+
+        if (config_status.is_fire())
+        {
+            current_state = node_state::fire;
+
         }
         break;
     }
@@ -611,25 +653,25 @@ void loop() {
             pixel.setPixelColor(i, 0xFF0000);
         }
 
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            if (neighbour_in_fire[i] == false && verified_edges[i] == true)
+            {
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet packet{};
+                memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                packet.channel = i;
+                com.write(packet);    
+            }     
+        }     
 
         if (config_status.is_reset())
         {
             current_state = node_state::idle;
-            
-            sky::mcp_buffer_t buffer{};
-            sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-            sky::mcp_make_buffer(buffer, mcp);
-            ray::packet packet{};
-            memcpy(packet.data, buffer, sky::mcp_buffer_size);
-            packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-            for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
-            {
-                packet.channel = i;
-                for (auto j = 0; j < 16; ++j) { // Flood the buffer
-                    com.write(packet);
-                }       
-            }
         }
 
         auto ch0 = com.read(0);
