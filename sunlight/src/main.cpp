@@ -14,6 +14,7 @@
 #include "SoftwareSerial.h"
 #include "ESP8266WiFi.h"
 #include <algorithm>
+#include <numeric>
 
 #include "sky.hpp"
 #include "control_register.hpp"
@@ -59,7 +60,12 @@ sky::address_t address_set[16];
 int32_t neighbour_list[16][4];
 size_t index_address_set = 0;
 sky::topo topo{};
+
+//Chosen path
 sky::topo_shortest_t shortestpath{};
+
+//List of all dijkstra paths
+sky::topo_shortest_t shorestpathList[16]{};
 
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
@@ -303,17 +309,17 @@ auto createTopo(){
             topo.matrix[i][neighbour_list[i][3]] = 1;
         } 
     }
-    //for (size_t i = 0; i < 16; i++)
-    //{
-        // for (size_t j = 0; j < 16; j++)
-        // {
-        //     //Show matrix
-        //     Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
-        //     Serial.print(topo.matrix[i][j]);
-        //     Serial.print(" ");
-        // }  
-        //Serial.println();
-    //}
+    // for (size_t i = 0; i < 16; i++)
+    // {
+    //     for (size_t j = 0; j < 16; j++)
+    //     {
+    //         //Show matrix
+    //         Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
+    //         //Serial.print(topo.matrix[i][j]);
+    //         Serial.print(" ");
+    //     }  
+    //     Serial.println();
+    // }
 }
 
 
@@ -405,13 +411,14 @@ auto handle_message = [](ray::packet const& packet) {
             for (auto i = 0; i < 16; ++i)  // Flood the buffer
                 com.write(pkt); 
         } 
+        //Topology
     }else if (mcp.type == 1) {
         updateEdges(mcp);
         //Prints addreset and neightbours for every node
-        //printAddrSetAndNeighbour();
+        printAddrSetAndNeighbour();
         createTopo();
-        sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
-        printPath(shortestpath);
+        //sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
+        //printPath(shortestpath);
         
         for (size_t i = 0; i < 4; i++)
         {
@@ -432,6 +439,10 @@ auto handle_message = [](ray::packet const& packet) {
                 for (auto i = 0; i < 8; ++i) com.write(pkt);
             }
         } 
+        //Animation
+    }else if(mcp.type == 2){
+        //What should happen when reciving animation packet
+    
         //FIRE
     }else if (mcp.type == 3)
     {
@@ -500,7 +511,8 @@ auto handle_message = [](ray::packet const& packet) {
                     }
                 }  
             }   
-        }   
+        }  
+        //Exit broadcast 
     }else if(mcp.type == 5){ 
         memcpy(exitAddr, mcp.source, sky::address_size);
         for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
@@ -665,6 +677,47 @@ void loop() {
                 } 
             }
 
+            auto exist = std::find_if(address_set , address_set + 16,
+            [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(exitAddr);
+            });
+            
+
+            if (exist != address_set + 16)
+            {
+                auto exit_index = (int32_t)(exist - address_set);
+                auto shortestCount = 0;
+                for (size_t i = 0; i < sky::length_of(address_set); i++)
+                {
+                    if (sky::mcp_address_to_u32(address_set[i]) != 0)
+                    {   
+                        shortestCount++;
+                        //From i to exit
+                        sky::topo_shortest_t path;
+                        sky::topo_compute_dijkstra(topo, (int32_t) i, exit_index, path);
+                        memcpy(shorestpathList[i], path, sizeof(sky::topo_shortest_t));
+                    }
+                }
+                auto maxIndex = 0;
+                auto maxLength = 0;
+                for (size_t i = 0; i < (size_t) shortestCount; i++)
+                {
+                    auto length = std::accumulate(shorestpathList[i], shorestpathList[i] + sky::max_path, 0,[](auto const& a, auto const& b) {
+                        if (b != 0){
+                            return a + 1;
+                        }
+                        return a;
+                    });
+
+                    if (length > maxLength)
+                    {
+                        maxLength = length;
+                        maxIndex = i;
+                    }   
+                }
+                memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
+            }
+            memset(shorestpathList, 0, sizeof(shorestpathList));
 
             for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
             {
@@ -719,7 +772,9 @@ void loop() {
                 packet.channel = i;
                 com.write(packet);    
             }     
-        }     
+        }  
+
+        printPath(shortestpath);   
 
         if (config_status.is_reset())
         {
