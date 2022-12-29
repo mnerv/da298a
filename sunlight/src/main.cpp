@@ -45,8 +45,13 @@ int32_t max_config_tries = 255;
 
 sky::address_t edges[ray::MAX_CHANNEL] {};
 bool verified_edges[ray::MAX_CHANNEL] {false, false, false, false};
+//Needs to be improved
 bool neighbour_in_fire[ray::MAX_CHANNEL] {false, false, false, false};
+//Needs to be improved
 bool reset[ray::MAX_CHANNEL] {false, false, false, false};
+
+sky::address_t exitAddr{};
+
 uint32_t start_time = 0;
 
 //16 = number of nodes
@@ -64,8 +69,6 @@ static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
 static ray::config_status config_status(CONFIG_PIN, control);
 
 static Adafruit_NeoPixel pixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
-
-WiFiClient client;
 
 auto print_mcp(sky::mcp const& mcp) -> void {
     sky::address_t id{};
@@ -364,9 +367,15 @@ void setup() {
 
 auto handle_message = [](ray::packet const& packet) {
     if (packet.size != sky::mcp_buffer_size) return;
+    
     sky::mcp_buffer_t buffer{};
     memcpy(buffer, packet.data, sky::mcp_buffer_size);
     auto mcp = sky::mcp_make_from_buffer(buffer);
+    if (!sky::mcp_check_crc(buffer))
+    {
+        return;
+    }
+    
     auto channel = packet.channel;
 
     //If type 0 edges finding
@@ -398,7 +407,8 @@ auto handle_message = [](ray::packet const& packet) {
         } 
     }else if (mcp.type == 1) {
         updateEdges(mcp);
-        printAddrSetAndNeighbour();
+        //Prints addreset and neightbours for every node
+        //printAddrSetAndNeighbour();
         createTopo();
         sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
         printPath(shortestpath);
@@ -483,7 +493,7 @@ auto handle_message = [](ray::packet const& packet) {
                 if (verified_edges[i] == true)
                 {
                     packet.channel = i;
-                    memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                    
 
                     for (auto j = 0; j < 16; ++j) { // Flood the buffer
                       com.write(packet);
@@ -491,6 +501,23 @@ auto handle_message = [](ray::packet const& packet) {
                 }  
             }   
         }   
+    }else if(mcp.type == 5){ 
+        memcpy(exitAddr, mcp.source, sky::address_size);
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            if (verified_edges[i] == true && channel != i)
+            {
+                ray::packet packet{};
+                packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                packet.channel = i;
+                memcpy(mcp.destination, edges[i], sky::address_size);
+                memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                for (size_t j = 0; j < 16; j++)
+                {
+                    com.write(packet);
+                }
+            }
+        }    
     }
 };
 
@@ -528,6 +555,32 @@ void loop() {
             if (!verified_edges[3]) {
                 packet.channel = 3;
                 com.write(packet);
+            }
+
+            
+            if (config_status.is_exit())
+            {
+                sky::mcp_u32_to_address(exitAddr, ESP.getChipId());
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 5, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet packet{};
+                for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+                {
+                    if (verified_edges[i])
+                    {
+                        memcpy(mcp.destination, edges[i], sky::address_size);
+                        memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                        packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                        packet.channel = i;
+                        for (size_t j = 0; j < 16; j++)
+                        {
+                            com.write(packet);
+                        }
+                        
+                    }       
+                }          
             }
         }   
 
@@ -611,8 +664,24 @@ void loop() {
                     com.write(pkt);
                 } 
             }
-        }
 
+
+            for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+            {
+                if (neighbour_in_fire[i] == true && verified_edges[i] == true)
+                {
+                    sky::mcp_buffer_t buffer{};
+                    sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                    sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                    sky::mcp_make_buffer(buffer, mcp);
+                    ray::packet packet{};
+                    memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                    packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                    packet.channel = i;
+                    com.write(packet);      
+                }
+            }   
+        }
         auto ch0 = com.read(0);
         auto ch1 = com.read(1);
         auto ch2 = com.read(2);
@@ -622,23 +691,6 @@ void loop() {
         handle_message(ch1);
         handle_message(ch2);
         handle_message(ch3);
-
-
-        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
-        {
-            if (neighbour_in_fire[i] == true && verified_edges[i] == true)
-        {
-            sky::mcp_buffer_t buffer{};
-            sky::mcp mcp{ 4, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-            sky::mcp_make_buffer(buffer, mcp);
-            ray::packet packet{};
-            memcpy(packet.data, buffer, sky::mcp_buffer_size);
-            packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-            packet.channel = i;
-            com.write(packet);      
-        }
-        } 
 
         if (config_status.is_fire())
         {
