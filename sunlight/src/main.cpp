@@ -309,17 +309,20 @@ auto createTopo(){
             topo.matrix[i][neighbour_list[i][3]] = 1;
         } 
     }
-    // for (size_t i = 0; i < 16; i++)
-    // {
-    //     for (size_t j = 0; j < 16; j++)
-    //     {
-    //         //Show matrix
-    //         Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
-    //         //Serial.print(topo.matrix[i][j]);
-    //         Serial.print(" ");
-    //     }  
-    //     Serial.println();
-    // }
+}
+
+auto printTopo(){
+    for (size_t i = 0; i < 16; i++)
+    {
+        for (size_t j = 0; j < 16; j++)
+        {
+            //Show matrix
+            Serial.print(topo.matrix[i][j] > 0 ? '1' : topo.matrix[i][j] == -1 ? '-' : '0');
+            //Serial.print(topo.matrix[i][j]);
+            Serial.print(" ");
+        }  
+        Serial.println();
+    }
 }
 
 
@@ -422,7 +425,7 @@ auto handle_message = [](ray::packet const& packet) {
         
         for (size_t i = 0; i < 4; i++)
         {
-            if (packet.channel != i && verified_edges[i] == true)
+            if (channel != i && verified_edges[i] == true)
             {
                 mcp.destination[0] = edges[i][0];
                 mcp.destination[1] = edges[i][1];
@@ -436,13 +439,13 @@ auto handle_message = [](ray::packet const& packet) {
                 memcpy(pkt.data, buffer, sky::mcp_buffer_size);
                 pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
                 pkt.channel = i;
-                for (auto i = 0; i < 8; ++i) com.write(pkt);
+                for (auto i = 0; i < 16; ++i) com.write(pkt);
             }
         } 
         //Animation
     }else if(mcp.type == 2){
-        //What should happen when reciving animation packet
-    
+        //What should happen when reciving animation packet (light up 3-2 sek IDK and turn off wait 1 sek repeat)
+
         //FIRE
     }else if (mcp.type == 3)
     {
@@ -452,9 +455,23 @@ auto handle_message = [](ray::packet const& packet) {
             com.clear_buffer(channel);
         }else {
             current_state = node_state::fire;
+
+            //See if node thats on fire exists in address_set
+            auto exist = std::find_if(address_set , address_set + 16,
+            [&](sky::address_t const& addr){
+            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mcp.source);
+            });
+
+            //If it exists its on fire and needs to be set into firemode (removed)
+            if (exist != address_set + 16) {
+                auto index = (size_t)(exist - address_set);
+                sky::topo_set_node_firemode(topo, index);
+            }
+
             sky::mcp_buffer_t buffer{};
             sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-            sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+            //Don't update the source so that the reciving node can set this node on fire
+            //sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
             memcpy(mcp.destination, edges[channel], sky::address_size);
             sky::mcp_make_buffer(buffer, mcp);
             ray::packet packet{};
@@ -630,7 +647,7 @@ void loop() {
     }
     case node_state::idle: {
         
-        //Show neighbour
+        //Show neighbours
         for (size_t i = 0; i < 4; i++)
         {
             if (verified_edges[i])
@@ -646,7 +663,7 @@ void loop() {
 
             for (size_t i = 0; i < 4; i++)
             {
-                if (edges[i][0] != 0)
+                if (sky::mcp_address_to_u32(edges[i]) != 0 && verified_edges[i] == true)
                 {
                     sky::mcp_buffer_t buffer{};
                     sky::mcp mcp{ 1, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
@@ -677,11 +694,11 @@ void loop() {
                 } 
             }
 
+            //Should happen in fire instead
             auto exist = std::find_if(address_set , address_set + 16,
             [&](sky::address_t const& addr){
             return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(exitAddr);
             });
-            
 
             if (exist != address_set + 16)
             {
@@ -708,16 +725,25 @@ void loop() {
                         }
                         return a;
                     });
-
+                    
                     if (length > maxLength)
                     {
                         maxLength = length;
                         maxIndex = i;
                     }   
                 }
-                memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
+
+                //if longest path is ours save it to use in fire
+                if (maxIndex == 0)
+                {
+                    memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
+                }
+                
+                
             }
+            //resets the list for next calculation
             memset(shorestpathList, 0, sizeof(shorestpathList));
+            //END
 
             for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
             {
@@ -774,7 +800,12 @@ void loop() {
             }     
         }  
 
-        printPath(shortestpath);   
+        if (millis() - start_time > 2000)
+        {
+            start_time = millis();
+            printAddrSetAndNeighbour();
+            printTopo();
+        }  
 
         if (config_status.is_reset())
         {
