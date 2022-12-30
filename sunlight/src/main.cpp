@@ -56,8 +56,8 @@ sky::address_t exitAddr{};
 uint32_t start_time = 0;
 
 //16 = number of nodes
-sky::address_t address_set[16];
-int32_t neighbour_list[16][4];
+sky::address_t address_set[16]{};
+int32_t neighbour_list[16][4]{};
 size_t index_address_set = 0;
 sky::topo topo{};
 
@@ -108,41 +108,43 @@ auto update_shift_register(uint8_t data) -> void {
     digitalWrite(SR_LATCH_PIN, HIGH);
 }
 
+auto insert_to_address_set(sky::address_t const& addr) -> void {
+    if (sky::mcp_address_to_u32(addr) == 0) return;
+    
+    //Finds addr in address_set
+    auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&addr](sky::address_t const& a) {
+        return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(a);
+    });
+    //Not exists insert MAC into address_set.
+    if (it == address_set + sky::length_of(address_set)) {
+        memcpy(address_set[index_address_set], addr, sky::address_size);
+        ++index_address_set;
+    }
+}
+
 auto saveMyEdges(){
-    auto index = 0;
-    //16 is number of nodes in system.
-    for (size_t i = 0; i < 16; i++)
-    {
-        if (address_set[i][0] == 0 && address_set[i][1] == 0 && address_set[i][2] == 0){
-            index = i;
-            break;
+    //Save ONLY OUR edges. If my/neighbours exist in address_set just set them else add them first.
+    auto myMAC = ESP.getChipId();
+    sky::address_t my_addr;
+    sky::mcp_u32_to_address(my_addr, myMAC);
+    insert_to_address_set(my_addr);
+    //Adds all edges to address_set if not exits
+    for (size_t i = 0; i < ray::MAX_CHANNEL; ++i) {
+        if (verified_edges[i]) {
+            insert_to_address_set(edges[i]);
         }
     }
 
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (edges[i][0] != 0 && edges[i][1] != 0 && edges[i][2] != 0)
-        {
-            memcpy(address_set[index], edges[i], sky::address_size);
-            index_address_set++;
-            index++;
-        }
-    }
+    for (size_t i = 0; i < ray::MAX_CHANNEL; ++i) {
+        if (!verified_edges[i]) continue;
 
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (edges[i][0] != 0 && edges[i][1] != 0 && edges[i][2] != 0)
-        {
-            for (size_t j = 0; j < 16; j++)
-            {
-                if (edges[i][0] == address_set[j][0] && edges[i][1] == address_set[j][1] && edges[i][2] == address_set[j][2])
-                {
-                    neighbour_list[0][i] = j;
-                    break;
-                }
-            } 
-        }else{
-            neighbour_list[0][i] = -1;
+        auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&i](sky::address_t const& a) {
+            return sky::mcp_address_to_u32(edges[i]) == sky::mcp_address_to_u32(a);
+        });
+        if (it != address_set + sky::length_of(address_set)){
+            //Find index of edge in address_set
+            auto const index = std::distance(address_set, it);
+            neighbour_list[0][i] = index;
         }
     }
 }
@@ -150,123 +152,85 @@ auto saveMyEdges(){
 auto updateEdges(sky::mcp mcp){
     //address_set[0] addresser
     //neighbour_list[0][0] grannar till address
-    Serial.println(index_address_set);
-    sky::address_t mac_addr{
+    sky::address_t node_addr{
         mcp.payload[0],
         mcp.payload[1],
         mcp.payload[2],
     };
 
-    sky::address_t neighbour1{
-    mcp.payload[3],
-    mcp.payload[4],
-    mcp.payload[5],
+    sky::address_t neighbours[ray::MAX_CHANNEL]{
+        {
+            mcp.payload[3],
+            mcp.payload[4],
+            mcp.payload[5],
+        },
+        {
+            mcp.payload[6],
+            mcp.payload[7],
+            mcp.payload[8],
+        },
+        {
+            mcp.payload[9],
+            mcp.payload[10],
+            mcp.payload[11],
+        },
+        {
+            mcp.payload[12],
+            mcp.payload[13],
+            mcp.payload[14],
+        }
     };
 
-    sky::address_t neighbour2{
-    mcp.payload[6],
-    mcp.payload[7],
-    mcp.payload[8],
-    };
-
-    sky::address_t neighbour3{
-    mcp.payload[9],
-    mcp.payload[10],
-    mcp.payload[11],
-    };
-
-    sky::address_t neighbour4{
-    mcp.payload[12],
-    mcp.payload[13],
-    mcp.payload[14],
-    };
-    
-    auto exist0 = std::find_if(address_set , address_set + 16,
-        [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mac_addr);
-    });
-    auto exist1 = std::find_if(address_set , address_set + 16,
-        [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour1);
-    });
-    auto exist2 = std::find_if(address_set , address_set + 16,
-        [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour2);
-    });
-    auto exist3 = std::find_if(address_set , address_set + 16,
-        [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour3);
-    });
-    auto exist4 = std::find_if(address_set , address_set + 16,
-        [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(neighbour4);
-    });
-
-    auto srcindex = 0;
-
-    if (exist0 != address_set + 16) {
-        srcindex = (size_t)(exist0 - address_set);
-        memcpy(neighbour_list[srcindex], mac_addr, sky::address_size);
-    } else{
-        memcpy(address_set[index_address_set], mac_addr, sky::address_size);
-        srcindex = index_address_set;
-        index_address_set++;
+    insert_to_address_set(node_addr);
+    for (size_t i = 0; i < ray::MAX_CHANNEL; i++) {
+        insert_to_address_set(neighbours[i]);
     }
 
-    if (sky::mcp_address_to_u32(neighbour1) != 0)
-    {
-        if (exist1 != address_set + 16) {
-            auto index = (uint32_t)(exist1 - address_set);
-            neighbour_list[srcindex][0] = index;
-        }else{
-            memcpy(address_set[index_address_set], neighbour1, sky::address_size);
-            neighbour_list[srcindex][0] = index_address_set;
-            index_address_set++;
+    auto const current_it = std::find_if(address_set, address_set + sky::length_of(address_set), [&node_addr](sky::address_t const& a) {
+        return sky::mcp_address_to_u32(node_addr) == sky::mcp_address_to_u32(a);
+    });
+    auto const current_index = std::distance(address_set, current_it);
+
+    for (size_t i = 0; i < sky::length_of(neighbours); ++i) {
+        if (sky::mcp_address_to_u32(neighbours[i]) == 0) continue;
+
+        auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&](sky::address_t const& a) {
+            auto const u32_addr = sky::mcp_address_to_u32(a);
+            return sky::mcp_address_to_u32(neighbours[i]) == u32_addr;
+        });
+        if (it != address_set + sky::length_of(address_set)){
+            //Find index of edge in address_set
+            auto const index = std::distance(address_set, it);
+            neighbour_list[current_index][i] = index;
         }
-    }else{
-        neighbour_list[srcindex][0] = -1;
-    }
-    
-    if (sky::mcp_address_to_u32(neighbour2) != 0)
-    {
-        if (exist2 != address_set + 16) {
-            auto index = (uint32_t)(exist2 - address_set);
-            neighbour_list[srcindex][1] = index;
-        }else{
-            memcpy(address_set[index_address_set], neighbour2, sky::address_size);
-            neighbour_list[srcindex][1] = index_address_set;
-            index_address_set++;
-        }
-    }else{
-        neighbour_list[srcindex][1] = -1;
     }
 
-    if (sky::mcp_address_to_u32(neighbour3) != 0)
-    {
-        if (exist3 != address_set + 16) {
-            auto index = (uint32_t)(exist3 - address_set);
-            neighbour_list[srcindex][2] = index;
-        }else{
-            memcpy(address_set[index_address_set], neighbour3, sky::address_size);
-            neighbour_list[srcindex][2] = index_address_set;
-            index_address_set++;
-        }
-    }else{
-        neighbour_list[srcindex][2] = -1;
+    Serial.print("current: ");
+    Serial.printf("%02x:%02x:%02x - ", node_addr[0], node_addr[1], node_addr[2]);
+    for (size_t j = 0; j < ray::MAX_CHANNEL; j++){
+        Serial.printf("%02x:%02x:%02x", neighbours[j][0], neighbours[j][1], neighbours[j][2]);
+        if (j < ray::MAX_CHANNEL - 1) Serial.print(", ");
+        else Serial.println();
     }
 
-    if (sky::mcp_address_to_u32(neighbour4) != 0)
-    {
-        if (exist4 != address_set + 16) {
-            auto index = (uint32_t)(exist4 - address_set);
-            neighbour_list[srcindex][3] = index;
-        }else{
-            memcpy(address_set[index_address_set], neighbour4, sky::address_size);
-            neighbour_list[srcindex][3] = index_address_set;
-            index_address_set++;
+    Serial.println("neighbour list");
+    for (size_t i = 0; i < index_address_set; i++) {
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.printf("%02x:%02x:%02x - ", address_set[i][0], address_set[i][1], address_set[i][2]);
+        for (size_t j = 0; j < ray::MAX_CHANNEL; j++){
+            auto index = neighbour_list[i][j];
+            if (index == -1) index = index_address_set;
+
+            auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&](sky::address_t const& a) {
+                auto const u32_addr = sky::mcp_address_to_u32(a);
+                return sky::mcp_address_to_u32(neighbours[i]) == u32_addr;
+            });
+            auto const absolute_index = std::distance(address_set, it);
+            Serial.printf("%d: %02x:%02x:%02x", absolute_index, address_set[index][0], address_set[index][1], address_set[index][2]);
+            if (j < ray::MAX_CHANNEL - 1) Serial.print(", ");
+            else Serial.println();
         }
-    }else{
-        neighbour_list[srcindex][3] = -1;
     }
 }
 
@@ -276,6 +240,7 @@ auto printAddrSetAndNeighbour(){
         Serial.printf("\nAddress_set: %02x:%02x:%02x", address_set[i][0], address_set[i][1], address_set[i][2]);
         Serial.printf("\nNeighbour list: %d, %d, %d, %d \n", neighbour_list[i][0], neighbour_list[i][1], neighbour_list[i][2], neighbour_list[i][3]);
     }
+    Serial.println();
 }
 
 auto createTopo(){
@@ -394,12 +359,14 @@ auto handle_message = [](ray::packet const& packet) {
             memcpy(edges[channel], mcp.source, sky::address_size);
             verified_edges[channel] = true;
             com.clear_buffer(channel);
+            saveMyEdges();
         } else {
             //If recived from channel not verified just save its MAC
             if (verified_edges[channel] == false)
             {
-                memcpy(edges[channel], mcp.source, sky::address_size);
+                memcpy(edges[channel], mcp.source, sky::address_size);  
                 verified_edges[channel] = true;
+                saveMyEdges();
             } 
 
             //Replying with ACK
