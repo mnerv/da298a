@@ -348,49 +348,56 @@ auto handle_message = [](ray::packet const& packet) {
     if (!sky::mcp_check_crc(buffer))
     {
         return;
-    }
-    
+    } 
     auto channel = packet.channel;
 
     //If type 0 edges finding
     if (mcp.type == 0) {
+        Serial.println("Channel:");
+        Serial.println(channel);
         //If ack just verify the edge and save its mac
         if (mcp.payload[0] == 1) {
-            memcpy(edges[channel], mcp.source, sky::address_size);
-            verified_edges[channel] = true;
-            com.clear_buffer(channel);
+            memcpy(edges[packet.channel], mcp.source, sky::address_size);
+            verified_edges[packet.channel] = true;
             saveMyEdges();
-        } else {
+        } else if(mcp.payload[0] == 0){
             //If recived from channel not verified just save its MAC
-            if (verified_edges[channel] == false)
+            if (verified_edges[packet.channel] == false && current_state == node_state::idle)
             {
-                memcpy(edges[channel], mcp.source, sky::address_size);  
-                verified_edges[channel] = true;
-                saveMyEdges();
-            } 
-
-            //Replying with ACK
-            memcpy(mcp.destination, mcp.source, sky::address_size);
-            sky::mcp_u32_to_address(mcp.source, ESP.getChipId()); 
-            mcp.payload[0] = 1;
-            sky::mcp_make_buffer(buffer, mcp);
-            ray::packet pkt{};
-            memcpy(pkt.data, buffer, sky::mcp_buffer_size);
-            pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
-            pkt.channel = channel;
-            for (auto i = 0; i < 16; ++i)  // Flood the buffer
-                com.write(pkt); 
+                memcpy(edges[packet.channel], mcp.source, sky::address_size);  
+                verified_edges[packet.channel] = true;
+                saveMyEdges();  
+            }  
+                //Replying with ACK (payload[0] == 1)
+                sky::mcp_buffer_t buff{};
+                sky::mcp ack{ 0, { 0, 0, 0 }, { 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(ack.source, ESP.getChipId());
+                memcpy(ack.destination, mcp.source, sky::address_size);
+                sky::mcp_make_buffer(buff, ack);
+                ray::packet pkt{};
+                memcpy(pkt.data, buff, sky::mcp_buffer_size);
+                pkt.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                pkt.channel = packet.channel;
+                for (size_t i = 0; i < 16; i++)
+                {
+                    com.write(pkt);
+                }
         } 
         //Topology
     }else if (mcp.type == 1) {
         updateEdges(mcp);
         //Prints addreset and neightbours for every node
         printAddrSetAndNeighbour();
+        Serial.println("Edges");
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            Serial.printf("%02x:%02x:%02x\n", edges[i][0], edges[i][1], edges[i][2]);
+        }
         createTopo();
         //sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
         //printPath(shortestpath);
         
-        for (size_t i = 0; i < 4; i++)
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
         {
             if (channel != i && verified_edges[i] == true)
             {
@@ -608,7 +615,6 @@ void loop() {
             }
             start_time = 0;
             current_state = node_state::idle;
-            saveMyEdges();
         }
         break;
     }
