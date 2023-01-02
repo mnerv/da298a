@@ -212,7 +212,8 @@ auto updateEdges(sky::mcp mcp){
         if (j < ray::MAX_CHANNEL - 1) Serial.print(", ");
         else Serial.println();
     }
-
+    Serial.println("exit");
+    Serial.printf("%02x:%02x:%02x\n", exitAddr[0], exitAddr[1], exitAddr[2]);
     Serial.println("neighbour list");
     for (size_t i = 0; i < index_address_set; i++) {
         Serial.print(i);
@@ -222,12 +223,12 @@ auto updateEdges(sky::mcp mcp){
             auto index = neighbour_list[i][j];
             if (index == -1) index = index_address_set;
 
-            auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&](sky::address_t const& a) {
-                auto const u32_addr = sky::mcp_address_to_u32(a);
-                return sky::mcp_address_to_u32(neighbours[i]) == u32_addr;
-            });
-            auto const absolute_index = std::distance(address_set, it);
-            Serial.printf("%d: %02x:%02x:%02x", absolute_index, address_set[index][0], address_set[index][1], address_set[index][2]);
+            // auto const it = std::find_if(address_set, address_set + sky::length_of(address_set), [&](sky::address_t const& a) {
+            //     auto const u32_addr = sky::mcp_address_to_u32(a);
+            //     return sky::mcp_address_to_u32(neighbours[i]) == u32_addr;
+            // });
+            // auto const absolute_index = std::distance(address_set, it);
+            Serial.printf("%d: %02x:%02x:%02x", index, address_set[index][0], address_set[index][1], address_set[index][2]);
             if (j < ray::MAX_CHANNEL - 1) Serial.print(", ");
             else Serial.println();
         }
@@ -303,6 +304,63 @@ auto printPath(sky::topo_shortest_t const& path){
     Serial.println();
 }
 
+auto savePath(){
+    //Should happen in fire instead
+        auto exist = std::find_if(address_set , address_set + 16,
+        [&](sky::address_t const& addr){
+        return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(exitAddr);
+        });
+
+        if (exist != address_set + 16)
+        {
+            auto exit_index = (int32_t)(exist - address_set);
+            auto shortestCount = 0;
+            for (size_t i = 0; i < sky::length_of(address_set); i++)
+            {
+                if (sky::mcp_address_to_u32(address_set[i]) != 0)
+                {   
+                    shortestCount++;
+                    //From i to exit
+                    sky::topo_shortest_t path;
+                    sky::topo_compute_dijkstra(topo, (int32_t) i, exit_index, path);
+                    memcpy(shorestpathList[i], path, sizeof(sky::topo_shortest_t));
+                }
+            }
+            auto maxIndex = 0;
+            auto maxLength = 0;
+            for (size_t i = 0; i < (size_t) shortestCount; i++)
+            {
+                auto length = std::accumulate(shorestpathList[i], shorestpathList[i] + sky::max_path, 0,[](auto const& a, auto const& b) {
+                    if (b != 0){
+                        return a + 1;
+                    }
+                    return a;
+                });
+                
+                if (length > maxLength)
+                {
+                    maxLength = length;
+                    maxIndex = i;
+                }   
+            }
+
+            //if longest path is ours save it to use in fire
+            if (maxIndex == 0)
+            {
+                memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
+            }
+
+            Serial.println("Paths in list");
+            for (size_t i = 0; i < 5; i++)
+            {
+                printPath(shorestpathList[i]);
+            }
+        }
+        //resets the list for next calculation
+        memset(shorestpathList, 0, sizeof(shorestpathList));
+        //END
+}
+
 void setup() {
     Serial.begin(HARDWARE_BAUD);
 
@@ -353,8 +411,6 @@ auto handle_message = [](ray::packet const& packet) {
 
     //If type 0 edges finding
     if (mcp.type == 0) {
-        Serial.println("Channel:");
-        Serial.println(channel);
         //If ack just verify the edge and save its mac
         if (mcp.payload[0] == 1) {
             memcpy(edges[packet.channel], mcp.source, sky::address_size);
@@ -387,13 +443,14 @@ auto handle_message = [](ray::packet const& packet) {
     }else if (mcp.type == 1) {
         updateEdges(mcp);
         //Prints addreset and neightbours for every node
-        printAddrSetAndNeighbour();
+        //printAddrSetAndNeighbour();
         Serial.println("Edges");
         for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
         {
             Serial.printf("%02x:%02x:%02x\n", edges[i][0], edges[i][1], edges[i][2]);
         }
         createTopo();
+        printTopo();
         //sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
         //printPath(shortestpath);
         
@@ -441,13 +498,7 @@ auto handle_message = [](ray::packet const& packet) {
                 auto index = (size_t)(exist - address_set);
                 sky::topo_set_node_firemode(topo, index);
             }
-
-            sky::mcp_buffer_t buffer{};
-            sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-            //Don't update the source so that the reciving node can set this node on fire
-            //sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
-            memcpy(mcp.destination, edges[channel], sky::address_size);
-            sky::mcp_make_buffer(buffer, mcp);
+            
             ray::packet packet{};
             packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
             for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
@@ -455,11 +506,16 @@ auto handle_message = [](ray::packet const& packet) {
                 if(channel == i)
                 {
                     mcp.payload[0] = 1;
+                    memcpy(mcp.destination, edges[channel], sky::address_size);
+                }else {
+                    mcp.payload[0] = 0;
                 }
+                sky::mcp_make_buffer(buffer, mcp);
                 
                 if (verified_edges[i] == true)
                 {
                     packet.channel = i;
+                    memcpy(mcp.destination, edges[i], sky::address_size);
                     memcpy(packet.data, buffer, sky::mcp_buffer_size);
 
                     for (auto j = 0; j < 16; ++j) { // Flood the buffer
@@ -667,56 +723,6 @@ void loop() {
                 } 
             }
 
-            //Should happen in fire instead
-            auto exist = std::find_if(address_set , address_set + 16,
-            [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(exitAddr);
-            });
-
-            if (exist != address_set + 16)
-            {
-                auto exit_index = (int32_t)(exist - address_set);
-                auto shortestCount = 0;
-                for (size_t i = 0; i < sky::length_of(address_set); i++)
-                {
-                    if (sky::mcp_address_to_u32(address_set[i]) != 0)
-                    {   
-                        shortestCount++;
-                        //From i to exit
-                        sky::topo_shortest_t path;
-                        sky::topo_compute_dijkstra(topo, (int32_t) i, exit_index, path);
-                        memcpy(shorestpathList[i], path, sizeof(sky::topo_shortest_t));
-                    }
-                }
-                auto maxIndex = 0;
-                auto maxLength = 0;
-                for (size_t i = 0; i < (size_t) shortestCount; i++)
-                {
-                    auto length = std::accumulate(shorestpathList[i], shorestpathList[i] + sky::max_path, 0,[](auto const& a, auto const& b) {
-                        if (b != 0){
-                            return a + 1;
-                        }
-                        return a;
-                    });
-                    
-                    if (length > maxLength)
-                    {
-                        maxLength = length;
-                        maxIndex = i;
-                    }   
-                }
-
-                //if longest path is ours save it to use in fire
-                if (maxIndex == 0)
-                {
-                    memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
-                }
-                
-                
-            }
-            //resets the list for next calculation
-            memset(shorestpathList, 0, sizeof(shorestpathList));
-            //END
 
             for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
             {
@@ -733,6 +739,7 @@ void loop() {
                     com.write(packet);      
                 }
             }   
+
         }
         auto ch0 = com.read(0);
         auto ch1 = com.read(1);
@@ -747,7 +754,7 @@ void loop() {
         if (config_status.is_fire())
         {
             current_state = node_state::fire;
-
+            savePath();
         }
         break;
     }
@@ -773,11 +780,15 @@ void loop() {
             }     
         }  
 
+
         if (millis() - start_time > 2000)
         {
             start_time = millis();
-            printAddrSetAndNeighbour();
+            //printAddrSetAndNeighbour();
             printTopo();
+            printPath(shortestpath);
+            savePath();
+            
         }  
 
         if (config_status.is_reset())

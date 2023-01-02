@@ -39,7 +39,7 @@ auto multicom::poll() -> void {
             m_in[m_channel].enq(pkt);
         } else if (!m_out[m_channel].empty()) {
             // No data received, try to transmit data in current channel
-            auto const& pack = m_out[m_channel].deq();
+            auto const pack = m_out[m_channel].deq();
             m_serial.flush();
             m_serial.stopListening();
             m_control.set_com_channel(m_channel, 1);
