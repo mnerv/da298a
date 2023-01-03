@@ -61,6 +61,8 @@ int32_t neighbour_list[16][4]{};
 size_t index_address_set = 0;
 sky::topo topo{};
 
+bool fire_node = false;
+
 //Chosen path
 sky::topo_shortest_t shortestpath{};
 
@@ -69,6 +71,9 @@ sky::topo_shortest_t shorestpathList[16]{};
 
 uint32_t pixel_time     = 0;
 uint32_t pixel_interval = 33;
+
+bool is_light_on = false;
+bool has_animation_packet = false;
 
 static ray::control_register control;
 static ray::multicom com(RX_PIN, TX_PIN, SOFTWARE_BAUD, control);
@@ -293,12 +298,12 @@ auto printTopo(){
 
 
 auto printPath(sky::topo_shortest_t const& path){
-    Serial.print("\nShortest Path: ");
+    Serial.print("\nAnim Path: ");
     for (size_t i = 0; i < 16; i++)
     {
         if (path[i] != 0)
         {
-            Serial.printf("%d ", path[i]);
+            Serial.printf("%d ", path[i] - 1);
         }    
     }
     Serial.println();
@@ -321,8 +326,9 @@ auto savePath(){
                 {   
                     shortestCount++;
                     //From i to exit
-                    sky::topo_shortest_t path;
-                    sky::topo_compute_dijkstra(topo, (int32_t) i, exit_index, path);
+                    sky::topo_shortest_t path{};
+                    // + 1 because thats how dijkstra is implemented
+                    sky::topo_compute_dijkstra(topo, (int32_t) i + 1, exit_index + 1, path);
                     memcpy(shorestpathList[i], path, sizeof(sky::topo_shortest_t));
                 }
             }
@@ -342,13 +348,8 @@ auto savePath(){
                     maxLength = length;
                     maxIndex = i;
                 }   
-            }
-
-            //if longest path is ours save it to use in fire
-            if (maxIndex == 0)
-            {
-                memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
-            }
+            }    
+            memcpy(shortestpath, shorestpathList[maxIndex], sizeof(sky::topo_shortest_t));
 
             Serial.println("Paths in list");
             for (size_t i = 0; i < 5; i++)
@@ -444,11 +445,6 @@ auto handle_message = [](ray::packet const& packet) {
         updateEdges(mcp);
         //Prints addreset and neightbours for every node
         //printAddrSetAndNeighbour();
-        Serial.println("Edges");
-        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
-        {
-            Serial.printf("%02x:%02x:%02x\n", edges[i][0], edges[i][1], edges[i][2]);
-        }
         createTopo();
         printTopo();
         //sky::topo_compute_dijkstra(topo, 3, 2, shortestpath);
@@ -476,7 +472,44 @@ auto handle_message = [](ray::packet const& packet) {
         //Animation
     }else if(mcp.type == 2){
         //What should happen when reciving animation packet (light up 3-2 sek IDK and turn off wait 1 sek repeat)
+        if(!config_status.is_exit()){
+            auto const it = std::find_if(address_set, address_set + 16, [&mcp](auto const& addr) {
+                return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mcp.source);
+            });
 
+            if (it != address_set + sky::length_of(address_set)) {
+                sky::address_t next_address{};
+                auto const address_index = std::distance(address_set, it);
+                for (size_t i = 0; i < sky::length_of(shortestpath); ++i) {
+                    if (shortestpath[i] == address_index) {
+                        memcpy(next_address, address_set[i + 2], sky::address_size);
+                        break;
+                    }
+                }
+
+                auto const next_channel_it = std::find_if(edges, edges + sky::length_of(edges), [&next_address](auto const& addr) {
+                    return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(next_address);
+                });
+                auto const next_index = std::distance(edges, next_channel_it);
+
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 2, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                memcpy(mcp.destination, next_address, sky::address_size);
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet packet{};
+                memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                packet.channel = next_index;
+                for (size_t i = 0; i < 8; i++)
+                {
+                    com.write(packet);
+                }
+            }
+        }
+
+        has_animation_packet = true;
+        
         //FIRE
     }else if (mcp.type == 3)
     {
@@ -487,10 +520,11 @@ auto handle_message = [](ray::packet const& packet) {
         }else {
             current_state = node_state::fire;
 
+            Serial.printf("\nAddress on fire: %02x:%02x:%02x\n", mcp.source[0], mcp.source[1], mcp.source[2]);
             //See if node thats on fire exists in address_set
             auto exist = std::find_if(address_set , address_set + 16,
             [&](sky::address_t const& addr){
-            return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mcp.source);
+                return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(mcp.source);
             });
 
             //If it exists its on fire and needs to be set into firemode (removed)
@@ -754,19 +788,20 @@ void loop() {
         if (config_status.is_fire())
         {
             current_state = node_state::fire;
+            fire_node = true;
             savePath();
+            for (size_t i = 0; i < 4; i++)
+            {
+                pixel.setPixelColor(i, 0xFF0000);
+            }
         }
         break;
     }
     case node_state::fire: {
-        for (size_t i = 0; i < 4; i++)
-        {
-            pixel.setPixelColor(i, 0xFF0000);
-        }
 
         for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
         {
-            if (neighbour_in_fire[i] == false && verified_edges[i] == true)
+            if (neighbour_in_fire[i] == false && verified_edges[i] == true && fire_node == true)
             {
                 sky::mcp_buffer_t buffer{};
                 sky::mcp mcp{ 3, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
@@ -784,6 +819,46 @@ void loop() {
         if (millis() - start_time > 2000)
         {
             start_time = millis();
+
+            //If I have saved the shortest path I am start node.
+            if(shortestpath[0] == 0){
+                for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+                {
+                    if (is_light_on)
+                        pixel.setPixelColor(i, 0x0011ff);
+                    else
+                        pixel.setPixelColor(i, 0x000000);
+                }
+                is_light_on = !is_light_on;
+
+                sky::address_t next_address;
+                memcpy(next_address, address_set[shortestpath[1]], sky::address_size);
+
+                auto const next_channel_it = std::find_if(edges, edges + sky::length_of(edges), [&next_address](auto const& addr) {
+                    return sky::mcp_address_to_u32(addr) == sky::mcp_address_to_u32(next_address);
+                });
+                auto const next_index = std::distance(edges, next_channel_it);
+
+                sky::mcp_buffer_t buffer{};
+                sky::mcp mcp{ 2, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+                sky::mcp_u32_to_address(mcp.source, ESP.getChipId());
+                sky::mcp_make_buffer(buffer, mcp);
+                ray::packet packet{};
+                memcpy(packet.data, buffer, sky::mcp_buffer_size);
+                packet.size = static_cast<uint8_t>(sky::mcp_buffer_size);
+                packet.channel = next_index;
+                com.write(packet);
+            } else if (has_animation_packet) {
+                for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+                {
+                    if (is_light_on)
+                        pixel.setPixelColor(i, 0x0011ff);
+                    else
+                        pixel.setPixelColor(i, 0x000000);
+                }
+                is_light_on = !is_light_on;
+            }
+            
             //printAddrSetAndNeighbour();
             printTopo();
             printPath(shortestpath);
