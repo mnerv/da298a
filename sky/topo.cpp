@@ -21,14 +21,11 @@ auto topo_set_node_link_cost(topo& topology, uint32_t node_id, uint32_t endNode_
 }
 
 auto topo_set_node_firemode(topo& topology, uint32_t node_id) -> void {
-
-    for (uint32_t i = 0; i < node_size; i++) {
-        if (i == node_id - 1) {
-            for (uint32_t j = 0; j < node_size; j++) {
-                topology.matrix[i][j] = -1;
-                topology.matrix[j][node_id-1] = -1;
-            }
-        }
+    //Remove node from topo
+    for (size_t i = 0; i < 16; i++)
+    {
+        topology.matrix[node_id][i] = -1;
+        topology.matrix[i][node_id] = -1;
     }
 }
 

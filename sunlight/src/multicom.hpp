@@ -32,6 +32,7 @@ public:
 
     auto write(packet pkt) noexcept -> void;
     auto read(uint8_t channel) noexcept -> packet;
+    auto clear_buffer(uint8_t channel) noexcept -> void;
 
 private:
     SoftwareSerial m_serial;

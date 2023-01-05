@@ -48,6 +48,12 @@ public:
         return SIZE;
     }
 
+    auto clear() noexcept -> void {
+        m_size = 0;
+        m_head = 0;
+        m_tail = 0;
+    }
+
 private:
     static auto inc(size_t& value, size_t const& size) noexcept -> void {
         value = (value + 1) % size;
