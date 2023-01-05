@@ -619,7 +619,11 @@ void loop() {
 
     switch (current_state) {
     case node_state::config: {
-        pixel.setPixelColor(0, 0xFF0000);
+
+        for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+        {
+            pixel.setPixelColor(i, 0xFFFF00);
+        }
 
         if (millis() - start_time > 125) {
             start_time = millis();
@@ -820,7 +824,7 @@ void loop() {
         {
             start_time = millis();
 
-            //If I have saved the shortest path I am start node.
+            //Check if first index in shortestPath is mine. 0 in address_set is always me.
             if(shortestpath[0] == 0){
                 for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
                 {
