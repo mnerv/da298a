@@ -826,14 +826,7 @@ void loop() {
 
             //Check if first index in shortestPath is mine. 0 in address_set is always me.
             if(shortestpath[0] == 0){
-                for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
-                {
-                    if (is_light_on)
-                        pixel.setPixelColor(i, 0x0011ff);
-                    else
-                        pixel.setPixelColor(i, 0x000000);
-                }
-                is_light_on = !is_light_on;
+
 
                 sky::address_t next_address;
                 memcpy(next_address, address_set[shortestpath[1]], sky::address_size);
@@ -853,7 +846,19 @@ void loop() {
                 packet.channel = next_index;
                 com.write(packet);
             } else if (has_animation_packet) {
-                for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+                // for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
+                // {
+                //     if (is_light_on)
+                //         pixel.setPixelColor(i, 0x0011ff);
+                //     else
+                //         pixel.setPixelColor(i, 0x000000);
+                // }
+                // is_light_on = !is_light_on;
+            }
+
+            if (fire_node != true)
+            {
+                 for (size_t i = 0; i < ray::MAX_CHANNEL; i++)
                 {
                     if (is_light_on)
                         pixel.setPixelColor(i, 0x0011ff);
@@ -862,6 +867,8 @@ void loop() {
                 }
                 is_light_on = !is_light_on;
             }
+            
+           
             
             //printAddrSetAndNeighbour();
             printTopo();
