@@ -1,6 +1,7 @@
 /**
  * @file   mcp.cpp
  * @author Pratchaya Khansomboon (me@mononerv.dev)
+ * @author Christian Heisterkamp
  * @brief  sky framework
  * @date   2022-10-19
  *
